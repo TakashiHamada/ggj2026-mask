@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://c36uba1keqcyl"]
+[gd_scene load_steps=10 format=3 uid="uid://c36uba1keqcyl"]
 
 [ext_resource type="Texture2D" uid="uid://b8i7vld7nkml2" path="res://platformer_metroidvania asset pack v1.01/herochar sprites(new)/herochar_idle_anim_strip_4.png" id="1_v0iea"]
 [ext_resource type="Script" path="res://Scripts/Player.gd" id="2_player"]
@@ -42,6 +42,9 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(12, 16)
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_mask"]
+radius = 6.0
+
 [node name="CharacterBody2D" type="CharacterBody2D"]
 script = ExtResource("2_player")
 
@@ -53,6 +56,23 @@ texture_filter = 1
 sprite_frames = SubResource("SpriteFrames_x3wgy")
 autoplay = "default"
 frame_progress = 0.93710953
+
+[node name="GasMask" type="Node2D" parent="."]
+visible = false
+position = Vector2(0, -4)
+
+[node name="MaskBase" type="Polygon2D" parent="GasMask"]
+color = Color(0.3, 0.3, 0.3, 0.9)
+polygon = PackedVector2Array(-5, -3, 5, -3, 6, 0, 5, 4, -5, 4, -6, 0)
+
+[node name="Visor" type="Polygon2D" parent="GasMask"]
+color = Color(0.2, 0.5, 0.3, 0.8)
+polygon = PackedVector2Array(-3, -2, 3, -2, 3, 1, -3, 1)
+
+[node name="Filter" type="Polygon2D" parent="GasMask"]
+position = Vector2(0, 3)
+color = Color(0.25, 0.25, 0.25, 1)
+polygon = PackedVector2Array(-2, 0, 2, 0, 2, 3, -2, 3)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(4, 4)

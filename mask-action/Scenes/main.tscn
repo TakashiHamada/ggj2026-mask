@@ -1,53 +1,20 @@
-[gd_scene load_steps=4 format=3 uid="uid://dwvuwqpgt80tq"]
+[gd_scene format=4 uid="uid://dwvuwqpgt80tq"]
 
 [ext_resource type="PackedScene" uid="uid://c36uba1keqcyl" path="res://Scenes/player.tscn" id="1_jjgbg"]
+[ext_resource type="TileSet" uid="uid://btileset32x32" path="res://tileset.tres" id="3_tileset"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
-size = Vector2(800, 32)
+[node name="main" type="Node2D" unique_id=1300352615]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_platform"]
-size = Vector2(200, 16)
+[node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=2055493988]
+tile_map_data = PackedByteArray("AAACAAgAAAABAAQAAAABAAgAAAABAAQAAAABAAkAAAABAAQAAAACAAkAAAABAAQAAAADAAkAAAABAAQAAAAEAAkAAAABAAQAAAAFAAkAAAABAAQAAAAHAAkAAAABAAQAAAAHAAgAAAABAAQAAAAIAAgAAgAAAAAAAQAIAAkAAAABAAQAAAAJAAkAAAABAAQAAAAJAAgAAAABAAQAAAAFAAgAAAABAAQAAAAGAAgAAAABAAQAAAAGAAkAAAABAAQAAAAEAAgAAAAJAAMAAAADAAgAAAABAAQAAAAHAAcAAAAJAAMAAAAIAAcAAAAJAAMAAAAIAAYAAAAJAAMAAAAKAAkAAAABAAQAAAALAAkAAAABAAQAAAALAAgAAAABAAQAAAAMAAgAAAABAAQAAAANAAgAAAABAAQAAAAOAAgAAgAAAAAAAQAOAAkAAAABAAQAAAANAAkAAAABAAQAAAAMAAkAAAABAAQAAAAKAAgAAAABAAQAAAAHAAYAAAAJAAMAAAAIAAUAAAAJAAMAAAAJAAUAAAAJAAMAAAAMAAcAAAABAAQAAAAPAAgAAgAAAAAAAQAPAAkAAAABAAQAAAAQAAgAAAABAAQAAAARAAgAAAABAAQAAAARAAkAAAABAAQAAAAQAAkAAAABAAQAAAANAAcAAAABAAQAAAASAAgAAAABAAQAAAASAAkAAAABAAQAAAA=")
+tile_set = ExtResource("3_tileset")
 
-[node name="main" type="Node2D"]
+[node name="Player" parent="." unique_id=1908908157 instance=ExtResource("1_jjgbg")]
+position = Vector2(100, 248)
 
-[node name="Ground" type="StaticBody2D" parent="."]
-position = Vector2(400, 300)
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground"]
-shape = SubResource("RectangleShape2D_ground")
-
-[node name="ColorRect" type="ColorRect" parent="Ground"]
-offset_left = -400.0
-offset_top = -16.0
-offset_right = 400.0
-offset_bottom = 16.0
-color = Color(0.4, 0.3, 0.2, 1)
-
-[node name="Platform1" type="StaticBody2D" parent="."]
-position = Vector2(200, 220)
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform1"]
-shape = SubResource("RectangleShape2D_platform")
-
-[node name="ColorRect" type="ColorRect" parent="Platform1"]
-offset_left = -100.0
-offset_top = -8.0
-offset_right = 100.0
-offset_bottom = 8.0
-color = Color(0.3, 0.5, 0.3, 1)
-
-[node name="Platform2" type="StaticBody2D" parent="."]
-position = Vector2(500, 160)
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform2"]
-shape = SubResource("RectangleShape2D_platform")
-
-[node name="ColorRect" type="ColorRect" parent="Platform2"]
-offset_left = -100.0
-offset_top = -8.0
-offset_right = 100.0
-offset_bottom = 8.0
-color = Color(0.3, 0.5, 0.3, 1)
-
-[node name="Player" parent="." instance=ExtResource("1_jjgbg")]
-position = Vector2(100, 250)
+[connection signal="body_entered" from="TileMapLayer/PoisonGas" to="TileMapLayer/PoisonGas" method="_on_body_entered"]
+[connection signal="body_exited" from="TileMapLayer/PoisonGas" to="TileMapLayer/PoisonGas" method="_on_body_exited"]
+[connection signal="body_entered" from="TileMapLayer/@Area2D@23632" to="TileMapLayer/@Area2D@23632" method="_on_body_entered"]
+[connection signal="body_exited" from="TileMapLayer/@Area2D@23632" to="TileMapLayer/@Area2D@23632" method="_on_body_exited"]
+[connection signal="body_entered" from="TileMapLayer/@Area2D@23633" to="TileMapLayer/@Area2D@23633" method="_on_body_entered"]
+[connection signal="body_exited" from="TileMapLayer/@Area2D@23633" to="TileMapLayer/@Area2D@23633" method="_on_body_exited"]

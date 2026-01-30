@@ -1,0 +1,29 @@
+[gd_resource type="PlayerConfig" load_steps=2 format=3]
+
+[resource]
+max_speed = 220.0
+acceleration = 1400.0
+deceleration = 1600.0
+jump_force = -420.0
+gravity = 1100.0
+max_fall_speed = 900.0
+coyote_time = 0.1
+jump_buffer_time = 0.12
+extra_jumps = 0
+air_acceleration = 800.0
+air_deceleration = 800.0
+air_control_multiplier = 0.6
+can_dash = false
+dash_speed = 520.0
+dash_time = 0.16
+dash_cooldown = 0.5
+can_wall_jump = false
+wall_slide_speed = 80.0
+wall_jump_force_x = 260.0
+wall_jump_force_y = -420.0
+animation_speed_multiplier = 1.0
+invulnerability_duration = 0.8
+knockback_strength_x = 260.0
+knockback_strength_y = -220.0
+slope_stop_threshold = 0.1
+ground_snap_length = 4.0
