@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://da7k8mh0ke0vw"]
+
+[ext_resource type="Script" uid="uid://bl0f5wc6hl46x" path="res://Scripts/PoisonGas.gd" id="1_nup1t"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gas"]
+size = Vector2(32, 32)
+
+[node name="PoisonGas" type="Area2D" unique_id=150114231]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_nup1t")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=154404853]
+shape = SubResource("RectangleShape2D_gas")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=592921281]
+offset_left = -16.0
+offset_top = -16.0
+offset_right = 16.0
+offset_bottom = 16.0
+color = Color(0.4, 0.8, 0.2, 0.6)
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="body_exited" from="." to="." method="_on_body_exited"]
