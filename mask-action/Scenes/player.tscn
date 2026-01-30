@@ -1,7 +1,10 @@
 [gd_scene load_steps=9 format=3 uid="uid://c36uba1keqcyl"]
 
 [ext_resource type="Texture2D" uid="uid://b8i7vld7nkml2" path="res://platformer_metroidvania asset pack v1.01/herochar sprites(new)/herochar_idle_anim_strip_4.png" id="1_v0iea"]
-[ext_resource type="Script" path="res://Scripts/Player.gd" id="2_player"]
+[ext_resource type="Script" uid="uid://b7h4nqh0vyocr" path="res://Scripts/Player.gd" id="2_player"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
+size = Vector2(12, 16)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_cvnsp"]
 atlas = ExtResource("1_v0iea")
@@ -35,14 +38,11 @@ animations = [{
 "texture": SubResource("AtlasTexture_fkybt")
 }],
 "loop": true,
-"name": &"default",
+"name": &"idle",
 "speed": 5.0
 }]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
-size = Vector2(12, 16)
-
-[node name="CharacterBody2D" type="CharacterBody2D"]
+[node name="Player" type="CharacterBody2D"]
 script = ExtResource("2_player")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
@@ -51,8 +51,8 @@ shape = SubResource("RectangleShape2D_player")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 texture_filter = 1
 sprite_frames = SubResource("SpriteFrames_x3wgy")
-autoplay = "default"
-frame_progress = 0.93710953
+animation = &"idle"
+autoplay = "idle"
 
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(4, 4)
