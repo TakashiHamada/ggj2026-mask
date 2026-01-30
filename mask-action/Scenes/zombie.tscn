@@ -160,8 +160,8 @@ animations = [{
 
 [node name="Zombie" type="CharacterBody2D"]
 script = ExtResource("1_n70j1")
-spit_range = 50.0
-spit_cooldown = 1.0
+spit_range = 100.0
+spit_cooldown = 0.5
 projectile_scene = ExtResource("2_iyl7r")
 attack_anim_name = &"spit"
 spit_release_frame = 2
@@ -188,4 +188,4 @@ target_position = Vector2(12, 20)
 
 [node name="SightRay" type="RayCast2D" parent="."]
 position = Vector2(12, 0)
-target_position = Vector2(50, 0)
+target_position = Vector2(100, 0)
