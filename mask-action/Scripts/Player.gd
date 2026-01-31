@@ -69,6 +69,7 @@ func die(ignore_mask: bool = false) -> void:
 		is_fully_charged = false
 		attack_area.monitoring = false
 		gas_mask.position = Vector2(0, -4)
+		gas_mask.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
 		_stop_charge_effect()
 		sprite.play()
 
@@ -133,7 +134,8 @@ func _start_charge() -> void:
 	charge_time = 0.0
 	is_fully_charged = false
 	sprite.pause()
-	# マスクを前方上部に構える
+	# マスクを前方上部に構える（攻撃用に大きく）
+	gas_mask.scale = Vector2(2 * facing_dir, 2)
 	gas_mask.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
 	gas_mask.position.y = ATTACK_START_Y
 
@@ -177,6 +179,7 @@ func _end_attack() -> void:
 	is_attacking = false
 	attack_area.monitoring = false
 	gas_mask.position = Vector2(0, -4)  # 元の位置に戻す
+	gas_mask.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
 	sprite.play()  # アニメーション再開
 
 func _on_attack_hit(body: Node) -> void:
@@ -207,6 +210,7 @@ func _die_from_gas() -> void:
 		is_fully_charged = false
 		attack_area.monitoring = false
 		gas_mask.position = Vector2(0, -4)
+		gas_mask.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
 		_stop_charge_effect()
 		sprite.play()
 
