@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://c4a5ba708cafc"]
+[gd_scene load_steps=25 format=3 uid="uid://c4a5ba708cafc"]
 
 [ext_resource type="Texture2D" uid="uid://dqdafmlb4aqhg" path="res://Zombies/Zombie.png" id="1_h3kin"]
 [ext_resource type="Script" uid="uid://chky4h0iaexck" path="res://Scenes/zombie.gd" id="1_n70j1"]
@@ -159,6 +159,7 @@ animations = [{
 }]
 
 [node name="Zombie" type="CharacterBody2D" groups=["enemy"]]
+collision_layer = 4
 script = ExtResource("1_n70j1")
 spit_range = 100.0
 projectile_scene = ExtResource("2_iyl7r")
