@@ -4,11 +4,15 @@ signal health_changed(current_hp: float, max_hp: float)
 
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var spawn_position: Vector2
+var has_obtained_mask: bool = false  # マスクを取得したか
 var has_gas_mask: bool = false
 var is_dying: bool = false
 var is_attacking: bool = false
 var is_charging: bool = false  # 溜め中
 var facing_dir: int = 1  # 1 = 右, -1 = 左
+var charge_time: float = 0.0  # 溜め時間
+var attack_damage: float = 1.0  # 現在の攻撃力
+var is_fully_charged: bool = false  # 最大溜め状態
 
 var max_hp: float = 3.0
 var current_hp: float = 3.0
@@ -18,6 +22,10 @@ var coins: int = 0
 @onready var gas_mask: Node2D = $GasMask
 @onready var attack_area: Area2D = $AttackArea
 @onready var attack_shape: CollisionShape2D = $AttackArea/CollisionShape2D
+@onready var collision_shape: CollisionShape2D = $CollisionShape2D
+
+var blink_tween: Tween = null
+var charge_tween: Tween = null
 
 func _ready() -> void:
 	spawn_position = global_position
@@ -28,9 +36,23 @@ func _ready() -> void:
 	var shape := attack_shape.shape as RectangleShape2D
 	shape.size = Vector2(PlayerConfig.ATTACK_RANGE_X, PlayerConfig.ATTACK_RANGE_Y)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	# マスク未取得なら能力使用不可
+	if not has_obtained_mask:
+		has_gas_mask = false
+		gas_mask.visible = false
+		return
+
 	has_gas_mask = Input.is_action_pressed("gas_mask")
 	gas_mask.visible = has_gas_mask or is_attacking or is_charging
+
+	# 溜め時間を加算
+	if is_charging:
+		charge_time += delta
+		# 最大溜めに達したら点滅開始
+		if not is_fully_charged and charge_time >= PlayerConfig.ATTACK_CHARGE_TIME:
+			is_fully_charged = true
+			_start_charge_effect()
 
 	# 攻撃入力（マスク装着中は攻撃不可）
 	if not is_dying and not has_gas_mask and not is_attacking:
@@ -38,6 +60,9 @@ func _process(_delta: float) -> void:
 			_start_charge()
 		elif Input.is_action_just_released("attack") and is_charging:
 			_release_attack()
+
+func obtain_mask() -> void:
+	has_obtained_mask = true
 
 func die(ignore_mask: bool = false) -> void:
 	if is_dying:
@@ -52,24 +77,31 @@ func die(ignore_mask: bool = false) -> void:
 	if is_charging or is_attacking:
 		is_charging = false
 		is_attacking = false
+		is_fully_charged = false
 		attack_area.monitoring = false
 		gas_mask.position = Vector2(0, -4)
+		gas_mask.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
+		_stop_charge_effect()
 		sprite.play()
 
 	if current_hp <= 0:
-		# 死亡：リスポーン
+		# 死亡：ステージリセット
 		is_dying = true
 		velocity = Vector2.ZERO
-		await get_tree().create_timer(1.0).timeout
-		current_hp = max_hp
-		health_changed.emit(current_hp, max_hp)
-		global_position = spawn_position
-		is_dying = false
+		_start_invincibility()
+		await get_tree().create_timer(PlayerConfig.DEATH_RESPAWN_TIME).timeout
+		get_tree().reload_current_scene()
 	else:
-		# ダメージを受けたが生存：短い無敵時間
+		# ダメージを受けたが生存：硬直＋無敵時間
 		is_dying = true
-		await get_tree().create_timer(0.5).timeout
-		is_dying = false
+		velocity = Vector2.ZERO  # その場で停止
+		_start_invincibility()
+		await get_tree().create_timer(PlayerConfig.DAMAGE_STUN_TIME).timeout
+		is_dying = false  # 硬直解除（操作可能に）
+		var remaining_invincibility := PlayerConfig.INVINCIBILITY_TIME - PlayerConfig.DAMAGE_STUN_TIME
+		if remaining_invincibility > 0:
+			await get_tree().create_timer(remaining_invincibility).timeout
+		_end_invincibility()
 
 func _physics_process(delta: float) -> void:
 	# 重力
@@ -110,14 +142,37 @@ const ATTACK_END_Y: float = 8.0      # 下の終了位置
 
 func _start_charge() -> void:
 	is_charging = true
+	charge_time = 0.0
+	is_fully_charged = false
 	sprite.pause()
-	# マスクを前方上部に構える
+	# マスクを前方上部に構える（攻撃用に大きく）
+	gas_mask.scale = Vector2(2 * facing_dir, 2)
 	gas_mask.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
 	gas_mask.position.y = ATTACK_START_Y
+
+func _start_charge_effect() -> void:
+	if charge_tween:
+		charge_tween.kill()
+	charge_tween = create_tween().set_loops()
+	charge_tween.tween_property(sprite, "modulate", Color(1.0, 0.3, 0.3), PlayerConfig.CHARGE_FLASH_SPEED)
+	charge_tween.tween_property(sprite, "modulate", Color.WHITE, PlayerConfig.CHARGE_FLASH_SPEED)
+
+func _stop_charge_effect() -> void:
+	if charge_tween:
+		charge_tween.kill()
+		charge_tween = null
+	sprite.modulate = Color.WHITE
 
 func _release_attack() -> void:
 	is_charging = false
 	is_attacking = true
+	is_fully_charged = false
+	_stop_charge_effect()
+
+	# 溜め時間に応じてダメージを計算
+	var charge_ratio := clampf(charge_time / PlayerConfig.ATTACK_CHARGE_TIME, 0.0, 1.0)
+	attack_damage = lerpf(PlayerConfig.ATTACK_BASE_DAMAGE, PlayerConfig.ATTACK_MAX_DAMAGE, charge_ratio)
+
 	attack_area.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
 	attack_area.monitoring = true
 
@@ -135,13 +190,14 @@ func _end_attack() -> void:
 	is_attacking = false
 	attack_area.monitoring = false
 	gas_mask.position = Vector2(0, -4)  # 元の位置に戻す
+	gas_mask.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
 	sprite.play()  # アニメーション再開
 
 func _on_attack_hit(body: Node) -> void:
 	if body == self:
 		return
 	if body.has_method("take_damage"):
-		body.take_damage()
+		body.take_damage(attack_damage)
 	elif body.has_method("die"):
 		body.die()
 
@@ -162,17 +218,43 @@ func _die_from_gas() -> void:
 	if is_charging or is_attacking:
 		is_charging = false
 		is_attacking = false
+		is_fully_charged = false
 		attack_area.monitoring = false
 		gas_mask.position = Vector2(0, -4)
+		gas_mask.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
+		_stop_charge_effect()
 		sprite.play()
 
 	is_dying = true
 	velocity = Vector2.ZERO
-	await get_tree().create_timer(1.0).timeout
-	current_hp = max_hp
-	health_changed.emit(current_hp, max_hp)
-	global_position = spawn_position
-	is_dying = false
+	_start_invincibility()
+	await get_tree().create_timer(PlayerConfig.DEATH_RESPAWN_TIME).timeout
+	get_tree().reload_current_scene()
+
+# 無敵状態の開始（点滅＋敵すり抜け）
+func _start_invincibility() -> void:
+	# 敵との当たり判定を無効化（レイヤー8に移動）
+	set_collision_layer_value(1, false)
+	set_collision_layer_value(8, true)
+
+	# 点滅開始
+	if blink_tween:
+		blink_tween.kill()
+	blink_tween = create_tween().set_loops()
+	blink_tween.tween_property(sprite, "modulate:a", 0.3, 0.08)
+	blink_tween.tween_property(sprite, "modulate:a", 1.0, 0.08)
+
+# 無敵状態の終了
+func _end_invincibility() -> void:
+	# 当たり判定を元に戻す
+	set_collision_layer_value(8, false)
+	set_collision_layer_value(1, true)
+
+	# 点滅停止
+	if blink_tween:
+		blink_tween.kill()
+		blink_tween = null
+	sprite.modulate.a = 1.0
 
 	
 
