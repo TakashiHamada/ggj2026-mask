@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3 uid="uid://c4a5ba708cafc"]
+[gd_scene load_steps=27 format=3 uid="uid://c4a5ba708cafc"]
 
 [ext_resource type="Texture2D" uid="uid://dqdafmlb4aqhg" path="res://Zombies/Zombie.png" id="1_h3kin"]
 [ext_resource type="Script" uid="uid://chky4h0iaexck" path="res://Scenes/zombie.gd" id="1_n70j1"]
@@ -9,6 +9,9 @@ size = Vector2(20, 26)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hitarea"]
 size = Vector2(28, 28)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_platform"]
+size = Vector2(20, 4)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_n70j1"]
 atlas = ExtResource("1_h3kin")
@@ -172,6 +175,15 @@ spit_release_frame = 2
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, 3)
 shape = SubResource("RectangleShape2D_h3kin")
+
+[node name="Platform" type="CharacterBody2D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platform"]
+position = Vector2(0, -12)
+shape = SubResource("RectangleShape2D_platform")
+one_way_collision = true
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 texture_filter = 1
