@@ -1,7 +1,8 @@
-[gd_scene format=3 uid="uid://c1h40f421adg7"]
+[gd_scene load_steps=12 format=3 uid="uid://r40pqapdd5gc"]
 
 [ext_resource type="Texture2D" uid="uid://bmxgo3tshk7to" path="res://platformer_metroidvania asset pack v1.01/miscellaneous sprites/coin_anim_strip_6.png" id="1_2qo34"]
 [ext_resource type="Script" uid="uid://cpvas78dy2erl" path="res://Scenes/coin.gd" id="1_jgi06"]
+[ext_resource type="AudioStream" uid="uid://dmp5qn1w3bm41" path="res://Audio/2_Coins.ogg" id="3_g537i"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_jgi06"]
 atlas = ExtResource("1_2qo34")
@@ -69,3 +70,9 @@ frame_progress = 0.7332814
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 scale = Vector2(0.40000045, 0.40000045)
 shape = SubResource("CircleShape2D_jgi06")
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("3_g537i")
+volume_db = 20.0
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
