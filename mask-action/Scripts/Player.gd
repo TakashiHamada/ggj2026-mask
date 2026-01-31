@@ -4,6 +4,7 @@ signal health_changed(current_hp: float, max_hp: float)
 
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var spawn_position: Vector2
+var has_obtained_mask: bool = false  # マスクを取得したか
 var has_gas_mask: bool = false
 var is_dying: bool = false
 var is_attacking: bool = false
@@ -35,6 +36,12 @@ func _ready() -> void:
 	shape.size = Vector2(PlayerConfig.ATTACK_RANGE_X, PlayerConfig.ATTACK_RANGE_Y)
 
 func _process(delta: float) -> void:
+	# マスク未取得なら能力使用不可
+	if not has_obtained_mask:
+		has_gas_mask = false
+		gas_mask.visible = false
+		return
+
 	has_gas_mask = Input.is_action_pressed("gas_mask")
 	gas_mask.visible = has_gas_mask or is_attacking or is_charging
 
@@ -52,6 +59,9 @@ func _process(delta: float) -> void:
 			_start_charge()
 		elif Input.is_action_just_released("attack") and is_charging:
 			_release_attack()
+
+func obtain_mask() -> void:
+	has_obtained_mask = true
 
 func die(ignore_mask: bool = false) -> void:
 	if is_dying:
