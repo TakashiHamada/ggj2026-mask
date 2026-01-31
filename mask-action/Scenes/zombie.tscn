@@ -161,7 +161,6 @@ animations = [{
 [node name="Zombie" type="CharacterBody2D"]
 script = ExtResource("1_n70j1")
 spit_range = 100.0
-spit_cooldown = 0.5
 projectile_scene = ExtResource("2_iyl7r")
 attack_anim_name = &"spit"
 spit_release_frame = 2
