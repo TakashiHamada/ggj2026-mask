@@ -1,5 +1,7 @@
 extends CharacterBody2D
 
+signal health_changed(current_hp: int, max_hp: int)
+
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var spawn_position: Vector2
 var has_gas_mask: bool = false
@@ -8,6 +10,9 @@ var is_attacking: bool = false
 var is_charging: bool = false  # 溜め中
 var facing_dir: int = 1  # 1 = 右, -1 = 左
 
+var max_hp: int = 3
+var current_hp: int = 3
+
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var gas_mask: Node2D = $GasMask
 @onready var attack_area: Area2D = $AttackArea
@@ -15,6 +20,8 @@ var facing_dir: int = 1  # 1 = 右, -1 = 左
 func _ready() -> void:
 	spawn_position = global_position
 	attack_area.body_entered.connect(_on_attack_hit)
+	current_hp = max_hp
+	health_changed.emit(current_hp, max_hp)
 
 func _process(_delta: float) -> void:
 	has_gas_mask = Input.is_action_pressed("gas_mask")
@@ -32,11 +39,32 @@ func die(ignore_mask: bool = false) -> void:
 		return
 	if has_gas_mask and not ignore_mask:
 		return
-	is_dying = true
-	velocity = Vector2.ZERO
-	await get_tree().create_timer(1.0).timeout
-	global_position = spawn_position
-	is_dying = false
+
+	current_hp -= 1
+	health_changed.emit(current_hp, max_hp)
+
+	# 溜め中・攻撃中だった場合はキャンセル
+	if is_charging or is_attacking:
+		is_charging = false
+		is_attacking = false
+		attack_area.monitoring = false
+		gas_mask.position = Vector2(0, -4)
+		sprite.play()
+
+	if current_hp <= 0:
+		# 死亡：リスポーン
+		is_dying = true
+		velocity = Vector2.ZERO
+		await get_tree().create_timer(1.0).timeout
+		current_hp = max_hp
+		health_changed.emit(current_hp, max_hp)
+		global_position = spawn_position
+		is_dying = false
+	else:
+		# ダメージを受けたが生存：短い無敵時間
+		is_dying = true
+		await get_tree().create_timer(0.5).timeout
+		is_dying = false
 
 func _physics_process(delta: float) -> void:
 	# 重力
