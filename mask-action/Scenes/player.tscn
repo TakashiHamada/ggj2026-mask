@@ -45,6 +45,9 @@ size = Vector2(12, 16)
 [sub_resource type="CircleShape2D" id="CircleShape2D_mask"]
 radius = 6.0
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_attack"]
+size = Vector2(32, 24)
+
 [node name="CharacterBody2D" type="CharacterBody2D" groups=["player"]]
 script = ExtResource("2_player")
 
@@ -76,3 +79,10 @@ polygon = PackedVector2Array(-2, 0, 2, 0, 2, 3, -2, 3)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(4, 4)
+
+[node name="AttackArea" type="Area2D" parent="."]
+position = Vector2(10, 0)
+monitoring = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackArea"]
+shape = SubResource("RectangleShape2D_attack")

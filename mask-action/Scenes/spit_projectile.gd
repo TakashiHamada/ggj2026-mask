@@ -18,5 +18,5 @@ func set_direction(dir: Vector2) -> void:
 func _on_body_entered(body: Node) -> void:
 	if body.is_in_group("player"):
 		if body.has_method("die"):
-			body.die()
+			body.die(true)  # マスクを無視して死亡
 		queue_free()

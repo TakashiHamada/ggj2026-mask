@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://c4a5ba708cafc"]
+[gd_scene format=3 uid="uid://c4a5ba708cafc"]
 
 [ext_resource type="Texture2D" uid="uid://dqdafmlb4aqhg" path="res://Zombies/Zombie.png" id="1_h3kin"]
 [ext_resource type="Script" uid="uid://chky4h0iaexck" path="res://Scenes/zombie.gd" id="1_n70j1"]
@@ -158,8 +158,7 @@ animations = [{
 "speed": 5.0
 }]
 
-[node name="Zombie" type="CharacterBody2D"]
-collision_layer = 4
+[node name="Zombie" type="CharacterBody2D" groups=["enemy"]]
 script = ExtResource("1_n70j1")
 spit_range = 100.0
 projectile_scene = ExtResource("2_iyl7r")
@@ -189,3 +188,11 @@ target_position = Vector2(12, 20)
 [node name="SightRay" type="RayCast2D" parent="."]
 position = Vector2(12, 0)
 target_position = Vector2(100, 0)
+
+[node name="HitArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HitArea"]
+position = Vector2(0, 3)
+shape = SubResource("RectangleShape2D_h3kin")
+
+[connection signal="body_entered" from="HitArea" to="." method="_on_hit_area_body_entered"]

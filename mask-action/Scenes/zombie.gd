@@ -1,11 +1,9 @@
 extends CharacterBody2D
 
-@export var speed: float = 60.0
-@export var gravity: float = 900.0
+var gravity: float = 900.0
 
 # --- Spit attack ---
 @export var spit_range: float = 200.0
-@export var spit_cooldown: float = 2.0
 @export var projectile_scene: PackedScene
 @export var attack_anim_name: StringName = &"attack" # or &"spit"
 @export var spit_release_frame: int = 3
@@ -125,7 +123,7 @@ func _player_in_sight() -> bool:
 # Patrol movement
 # -----------------------------
 func _patrol() -> void:
-	velocity.x = float(dir) * speed
+	velocity.x = float(dir) * ZombieConfig.MOVE_SPEED
 
 	wall_check.force_raycast_update()
 	if wall_check.is_colliding():
@@ -152,7 +150,7 @@ func _start_spit_attack() -> void:
 	if anim.sprite_frames == null or not anim.sprite_frames.has_animation(attack_anim_name):
 		_spawn_spit()
 		is_attacking = false
-		await get_tree().create_timer(spit_cooldown).timeout
+		await get_tree().create_timer(ZombieConfig.SPIT_COOLDOWN).timeout
 		can_spit = true
 		return
 
@@ -187,7 +185,7 @@ func _start_spit_attack() -> void:
 	anim.stop()
 
 	# Cooldown
-	await get_tree().create_timer(spit_cooldown).timeout
+	await get_tree().create_timer(ZombieConfig.SPIT_COOLDOWN).timeout
 	can_spit = true
 
 func _spawn_spit() -> void:
@@ -278,3 +276,10 @@ func _update_animation() -> void:
 	else:
 		if anim.sprite_frames.has_animation(&"idle") and anim.animation != "idle":
 			anim.play("idle")
+
+func take_damage() -> void:
+	queue_free()
+
+func _on_hit_area_body_entered(body: Node) -> void:
+	if body.is_in_group("player") and body.has_method("die"):
+		body.die(true)  # マスクを無視して死亡
