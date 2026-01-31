@@ -1,6 +1,8 @@
 extends CharacterBody2D
 
 signal health_changed(current_hp: float, max_hp: float)
+signal coins_changed(current_coins: int, total_coins: int)
+signal stage_cleared
 
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var spawn_position: Vector2
@@ -13,10 +15,12 @@ var facing_dir: int = 1  # 1 = 右, -1 = 左
 var charge_time: float = 0.0  # 溜め時間
 var attack_damage: float = 1.0  # 現在の攻撃力
 var is_fully_charged: bool = false  # 最大溜め状態
+var is_stage_cleared: bool = false  # ステージクリア状態
 
 var max_hp: float = 3.0
 var current_hp: float = 3.0
 var coins: int = 0
+var total_coins: int = 0
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var gas_mask: Node2D = $GasMask
@@ -35,6 +39,12 @@ func _ready() -> void:
 	# 攻撃範囲をパラメーターから設定
 	var shape := attack_shape.shape as RectangleShape2D
 	shape.size = Vector2(PlayerConfig.ATTACK_RANGE_X, PlayerConfig.ATTACK_RANGE_Y)
+	# ステージ内のコイン数をカウント
+	await get_tree().process_frame
+	var coins_node := get_tree().current_scene.get_node_or_null("Coins")
+	if coins_node:
+		total_coins = coins_node.get_child_count()
+	coins_changed.emit(coins, total_coins)
 
 func _process(delta: float) -> void:
 	# マスク未取得なら能力使用不可
@@ -258,7 +268,19 @@ func _end_invincibility() -> void:
 
 	
 
-func add_coin(amount: int):
+func add_coin(amount: int) -> void:
 	coins += amount
-	print("Coins:", coins)
+	coins_changed.emit(coins, total_coins)
+	if coins >= total_coins and total_coins > 0:
+		_on_stage_clear()
+
+func _on_stage_clear() -> void:
+	stage_cleared.emit()
+	is_stage_cleared = true
+	is_dying = true  # 操作を無効化
+	velocity = Vector2.ZERO
+
+func _input(event: InputEvent) -> void:
+	if is_stage_cleared and event.is_pressed():
+		get_tree().reload_current_scene()
 
