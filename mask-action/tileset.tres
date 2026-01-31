@@ -1,4 +1,4 @@
-[gd_resource type="TileSet" format=3 uid="uid://btileset32x32"]
+[gd_resource type="TileSet" load_steps=5 format=3 uid="uid://btileset32x32"]
 
 [ext_resource type="Texture2D" uid="uid://c26el5x1qng48" path="res://platformer_metroidvania asset pack v1.01/tiles and background_foreground (new)/tileset_32x32(new).png" id="1_tileset"]
 [ext_resource type="PackedScene" uid="uid://da7k8mh0ke0vw" path="res://Scenes/poison_gas.tscn" id="2_ej02t"]

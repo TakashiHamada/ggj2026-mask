@@ -11,6 +11,9 @@ var gravity: float = 900.0
 # --- Patrol behavior ---
 @export var turn_on_ledge: bool = true
 
+# --- GLOBAL ATTACK TOGGLE ---
+@export var can_attack: bool = true
+
 # --- Line of sight ---
 @export var los_max_distance: float = 260.0
 @export var los_y_offset: float = -6.0 # eye/mouth height
@@ -88,7 +91,7 @@ func _physics_process(delta: float) -> void:
 			" can_spit=", can_spit)
 
 	# Attack only if in range + visible
-	if in_range and in_sight and can_spit:
+	if in_range and in_sight and can_spit and can_attack:
 		_start_spit_attack()
 	else:
 		# Not visible -> resume patrol immediately
