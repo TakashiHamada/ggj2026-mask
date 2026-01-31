@@ -278,3 +278,10 @@ func _update_animation() -> void:
 	else:
 		if anim.sprite_frames.has_animation(&"idle") and anim.animation != "idle":
 			anim.play("idle")
+
+func take_damage() -> void:
+	queue_free()
+
+func _on_hit_area_body_entered(body: Node) -> void:
+	if body.is_in_group("player") and body.has_method("die"):
+		body.die(true)  # マスクを無視して死亡
