@@ -12,6 +12,7 @@ var facing_dir: int = 1  # 1 = 右, -1 = 左
 
 var max_hp: float = 3.0
 var current_hp: float = 3.0
+var coins: int = 0
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var gas_mask: Node2D = $GasMask
@@ -172,3 +173,10 @@ func _die_from_gas() -> void:
 	health_changed.emit(current_hp, max_hp)
 	global_position = spawn_position
 	is_dying = false
+
+	
+
+func add_coin(amount: int):
+	coins += amount
+	print("Coins:", coins)
+
