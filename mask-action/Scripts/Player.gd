@@ -17,6 +17,9 @@ var current_hp: float = 3.0
 @onready var gas_mask: Node2D = $GasMask
 @onready var attack_area: Area2D = $AttackArea
 @onready var attack_shape: CollisionShape2D = $AttackArea/CollisionShape2D
+@onready var collision_shape: CollisionShape2D = $CollisionShape2D
+
+var blink_tween: Tween = null
 
 func _ready() -> void:
 	spawn_position = global_position
@@ -56,19 +59,23 @@ func die(ignore_mask: bool = false) -> void:
 		sprite.play()
 
 	if current_hp <= 0:
-		# 死亡：リスポーン
+		# 死亡：ステージリセット
 		is_dying = true
 		velocity = Vector2.ZERO
-		await get_tree().create_timer(1.0).timeout
-		current_hp = max_hp
-		health_changed.emit(current_hp, max_hp)
-		global_position = spawn_position
-		is_dying = false
+		_start_invincibility()
+		await get_tree().create_timer(PlayerConfig.DEATH_RESPAWN_TIME).timeout
+		get_tree().reload_current_scene()
 	else:
-		# ダメージを受けたが生存：短い無敵時間
+		# ダメージを受けたが生存：硬直＋無敵時間
 		is_dying = true
-		await get_tree().create_timer(0.5).timeout
-		is_dying = false
+		velocity = Vector2.ZERO  # その場で停止
+		_start_invincibility()
+		await get_tree().create_timer(PlayerConfig.DAMAGE_STUN_TIME).timeout
+		is_dying = false  # 硬直解除（操作可能に）
+		var remaining_invincibility := PlayerConfig.INVINCIBILITY_TIME - PlayerConfig.DAMAGE_STUN_TIME
+		if remaining_invincibility > 0:
+			await get_tree().create_timer(remaining_invincibility).timeout
+		_end_invincibility()
 
 func _physics_process(delta: float) -> void:
 	# 重力
@@ -167,8 +174,31 @@ func _die_from_gas() -> void:
 
 	is_dying = true
 	velocity = Vector2.ZERO
-	await get_tree().create_timer(1.0).timeout
-	current_hp = max_hp
-	health_changed.emit(current_hp, max_hp)
-	global_position = spawn_position
-	is_dying = false
+	_start_invincibility()
+	await get_tree().create_timer(PlayerConfig.DEATH_RESPAWN_TIME).timeout
+	get_tree().reload_current_scene()
+
+# 無敵状態の開始（点滅＋敵すり抜け）
+func _start_invincibility() -> void:
+	# 敵との当たり判定を無効化（レイヤー8に移動）
+	set_collision_layer_value(1, false)
+	set_collision_layer_value(8, true)
+
+	# 点滅開始
+	if blink_tween:
+		blink_tween.kill()
+	blink_tween = create_tween().set_loops()
+	blink_tween.tween_property(sprite, "modulate:a", 0.3, 0.08)
+	blink_tween.tween_property(sprite, "modulate:a", 1.0, 0.08)
+
+# 無敵状態の終了
+func _end_invincibility() -> void:
+	# 当たり判定を元に戻す
+	set_collision_layer_value(8, false)
+	set_collision_layer_value(1, true)
+
+	# 点滅停止
+	if blink_tween:
+		blink_tween.kill()
+		blink_tween = null
+	sprite.modulate.a = 1.0

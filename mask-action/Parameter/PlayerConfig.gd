@@ -10,3 +10,8 @@ const GAS_DAMAGE_PER_SECOND: float = .1  # 毒ガスで1秒あたりに受ける
 const ATTACK_RANGE_X: float = 48.0  # 攻撃の横幅
 const ATTACK_RANGE_Y: float = 32.0  # 攻撃の縦幅
 const ATTACK_OFFSET_X: float = 14.0  # 前方へのオフセット
+
+# ダメージ
+const DAMAGE_STUN_TIME: float = 0.5  # ダメージ時の硬直時間（秒）
+const INVINCIBILITY_TIME: float = 1.0  # 無敵時間（秒）※硬直時間より長くすること
+const DEATH_RESPAWN_TIME: float = 1.0  # 死亡時のリスポーン時間（秒）
