@@ -1,6 +1,6 @@
 extends CharacterBody2D
 
-signal health_changed(current_hp: int, max_hp: int)
+signal health_changed(current_hp: float, max_hp: float)
 
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var spawn_position: Vector2
@@ -10,8 +10,8 @@ var is_attacking: bool = false
 var is_charging: bool = false  # 溜め中
 var facing_dir: int = 1  # 1 = 右, -1 = 左
 
-var max_hp: int = 3
-var current_hp: int = 3
+var max_hp: float = 3.0
+var current_hp: float = 3.0
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var gas_mask: Node2D = $GasMask
@@ -87,14 +87,15 @@ func _physics_process(delta: float) -> void:
 		velocity.y = PlayerConfig.JUMP_VELOCITY
 
 	# 左右移動
+	var move_speed := PlayerConfig.MOVE_SPEED_WITH_MASK if has_gas_mask else PlayerConfig.MOVE_SPEED
 	var direction := Input.get_axis("move_left", "move_right")
 	if direction != 0:
-		velocity.x = direction * PlayerConfig.MOVE_SPEED
+		velocity.x = direction * move_speed
 		sprite.flip_h = direction < 0
 		gas_mask.scale.x = -1 if direction < 0 else 1
 		facing_dir = 1 if direction > 0 else -1
 	else:
-		velocity.x = move_toward(velocity.x, 0, PlayerConfig.MOVE_SPEED)
+		velocity.x = move_toward(velocity.x, 0, move_speed)
 
 	move_and_slide()
 
@@ -139,3 +140,32 @@ func _on_attack_hit(body: Node) -> void:
 		body.take_damage()
 	elif body.has_method("die"):
 		body.die()
+
+func take_gas_damage(delta: float) -> void:
+	if has_gas_mask or is_dying:
+		return
+
+	current_hp -= PlayerConfig.GAS_DAMAGE_PER_SECOND * delta
+	health_changed.emit(current_hp, max_hp)
+
+	if current_hp <= 0:
+		current_hp = 0
+		health_changed.emit(current_hp, max_hp)
+		_die_from_gas()
+
+func _die_from_gas() -> void:
+	# 溜め中・攻撃中だった場合はキャンセル
+	if is_charging or is_attacking:
+		is_charging = false
+		is_attacking = false
+		attack_area.monitoring = false
+		gas_mask.position = Vector2(0, -4)
+		sprite.play()
+
+	is_dying = true
+	velocity = Vector2.ZERO
+	await get_tree().create_timer(1.0).timeout
+	current_hp = max_hp
+	health_changed.emit(current_hp, max_hp)
+	global_position = spawn_position
+	is_dying = false
