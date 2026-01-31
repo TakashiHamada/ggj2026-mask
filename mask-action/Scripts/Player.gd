@@ -15,8 +15,10 @@ func _process(_delta: float) -> void:
 	has_gas_mask = Input.is_action_pressed("gas_mask")
 	gas_mask.visible = has_gas_mask
 
-func die() -> void:
-	if has_gas_mask or is_dying:
+func die(ignore_mask: bool = false) -> void:
+	if is_dying:
+		return
+	if has_gas_mask and not ignore_mask:
 		return
 	is_dying = true
 	velocity = Vector2.ZERO
