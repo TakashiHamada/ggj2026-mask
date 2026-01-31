@@ -4,10 +4,13 @@ signal health_changed(current_hp: float, max_hp: float)
 signal coins_changed(current_coins: int, total_coins: int)
 signal stage_cleared
 
+enum MaskType { NONE, MELEE, BOOMERANG }
+
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var spawn_position: Vector2
-var has_obtained_mask: bool = false  # マスクを取得したか
+var mask_type: MaskType = MaskType.NONE  # 所持しているマスクの種類
 var has_gas_mask: bool = false
+var is_boomerang_thrown: bool = false  # ブーメラン投げ中
 var is_dying: bool = false
 var is_attacking: bool = false
 var is_charging: bool = false  # 溜め中
@@ -48,13 +51,13 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	# マスク未取得なら能力使用不可
-	if not has_obtained_mask:
+	if mask_type == MaskType.NONE:
 		has_gas_mask = false
 		gas_mask.visible = false
 		return
 
-	has_gas_mask = Input.is_action_pressed("gas_mask")
-	gas_mask.visible = has_gas_mask or is_attacking or is_charging
+	has_gas_mask = Input.is_action_pressed("gas_mask") and not is_boomerang_thrown
+	gas_mask.visible = (has_gas_mask or is_attacking or is_charging) and not is_boomerang_thrown
 
 	# 溜め時間を加算
 	if is_charging:
@@ -64,15 +67,15 @@ func _process(delta: float) -> void:
 			is_fully_charged = true
 			_start_charge_effect()
 
-	# 攻撃入力（マスク装着中は攻撃不可）
-	if not is_dying and not has_gas_mask and not is_attacking:
+	# 攻撃入力（マスク装着中・ブーメラン投げ中は攻撃不可）
+	if not is_dying and not has_gas_mask and not is_attacking and not is_boomerang_thrown:
 		if Input.is_action_just_pressed("attack") and not is_charging:
 			_start_charge()
 		elif Input.is_action_just_released("attack") and is_charging:
 			_release_attack()
 
-func obtain_mask() -> void:
-	has_obtained_mask = true
+func obtain_mask(type: MaskType = MaskType.MELEE) -> void:
+	mask_type = type
 
 func die(ignore_mask: bool = false) -> void:
 	if is_dying:
@@ -175,7 +178,6 @@ func _stop_charge_effect() -> void:
 
 func _release_attack() -> void:
 	is_charging = false
-	is_attacking = true
 	is_fully_charged = false
 	_stop_charge_effect()
 
@@ -183,6 +185,13 @@ func _release_attack() -> void:
 	var charge_ratio := clampf(charge_time / PlayerConfig.ATTACK_CHARGE_TIME, 0.0, 1.0)
 	attack_damage = lerpf(PlayerConfig.ATTACK_BASE_DAMAGE, PlayerConfig.ATTACK_MAX_DAMAGE, charge_ratio)
 
+	if mask_type == MaskType.BOOMERANG:
+		_release_boomerang_attack()
+	else:
+		_release_melee_attack()
+
+func _release_melee_attack() -> void:
+	is_attacking = true
 	attack_area.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
 	attack_area.monitoring = true
 
@@ -195,6 +204,23 @@ func _release_attack() -> void:
 	await get_tree().physics_frame
 	for body in attack_area.get_overlapping_bodies():
 		_on_attack_hit(body)
+
+func _release_boomerang_attack() -> void:
+	is_boomerang_thrown = true
+	gas_mask.visible = false
+	gas_mask.scale = Vector2(facing_dir, 1)
+	gas_mask.position = Vector2(0, -4)
+	sprite.play()
+
+	# ブーメランを生成
+	var boomerang_scene := preload("res://Scenes/boomerang.tscn")
+	var boomerang := boomerang_scene.instantiate()
+	get_parent().add_child(boomerang)
+	boomerang.global_position = global_position + Vector2(10 * facing_dir, -4)
+	boomerang.setup(self, facing_dir, attack_damage)
+
+func on_boomerang_returned() -> void:
+	is_boomerang_thrown = false
 
 func _end_attack() -> void:
 	is_attacking = false

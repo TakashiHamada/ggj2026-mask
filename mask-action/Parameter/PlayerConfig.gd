@@ -17,6 +17,10 @@ const ATTACK_MAX_DAMAGE: float = 3.0   # 最大溜めの攻撃力
 const ATTACK_CHARGE_TIME: float = 0.6  # 最大溜めに必要な時間（秒）
 const CHARGE_FLASH_SPEED: float = 0.1  # 溜め中の点滅速度（秒）
 
+# ブーメラン
+const BOOMERANG_MAX_DISTANCE: float = 150.0  # ブーメランの最大飛距離
+const BOOMERANG_SPEED: float = 200.0         # ブーメランの速度
+
 # ダメージ
 const DAMAGE_STUN_TIME: float = 0.5  # ダメージ時の硬直時間（秒）
 const INVINCIBILITY_TIME: float = 1.0  # 無敵時間（秒）※硬直時間より長くすること
