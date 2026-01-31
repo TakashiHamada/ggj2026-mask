@@ -281,6 +281,9 @@ func _on_stage_clear() -> void:
 	velocity = Vector2.ZERO
 
 func _input(event: InputEvent) -> void:
-	if is_stage_cleared and event.is_pressed():
+	if not is_stage_cleared:
+		return
+	# スペース、N、Mキーでリスタート
+	if Input.is_action_just_pressed("jump") or Input.is_action_just_pressed("attack") or Input.is_action_just_pressed("gas_mask"):
 		get_tree().reload_current_scene()
 
