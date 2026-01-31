@@ -16,6 +16,7 @@ var is_fully_charged: bool = false  # 最大溜め状態
 
 var max_hp: float = 3.0
 var current_hp: float = 3.0
+var coins: int = 0
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var gas_mask: Node2D = $GasMask
@@ -254,3 +255,10 @@ func _end_invincibility() -> void:
 		blink_tween.kill()
 		blink_tween = null
 	sprite.modulate.a = 1.0
+
+	
+
+func add_coin(amount: int):
+	coins += amount
+	print("Coins:", coins)
+
