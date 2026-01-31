@@ -16,12 +16,16 @@ var current_hp: float = 3.0
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var gas_mask: Node2D = $GasMask
 @onready var attack_area: Area2D = $AttackArea
+@onready var attack_shape: CollisionShape2D = $AttackArea/CollisionShape2D
 
 func _ready() -> void:
 	spawn_position = global_position
 	attack_area.body_entered.connect(_on_attack_hit)
 	current_hp = max_hp
 	health_changed.emit(current_hp, max_hp)
+	# 攻撃範囲をパラメーターから設定
+	var shape := attack_shape.shape as RectangleShape2D
+	shape.size = Vector2(PlayerConfig.ATTACK_RANGE_X, PlayerConfig.ATTACK_RANGE_Y)
 
 func _process(_delta: float) -> void:
 	has_gas_mask = Input.is_action_pressed("gas_mask")
@@ -100,7 +104,6 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 # 攻撃処理
-const ATTACK_OFFSET_X: float = 12.0  # 前方へのオフセット
 const ATTACK_START_Y: float = -12.0  # 上の開始位置
 const ATTACK_END_Y: float = 8.0      # 下の終了位置
 
@@ -108,13 +111,13 @@ func _start_charge() -> void:
 	is_charging = true
 	sprite.pause()
 	# マスクを前方上部に構える
-	gas_mask.position.x = ATTACK_OFFSET_X * facing_dir
+	gas_mask.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
 	gas_mask.position.y = ATTACK_START_Y
 
 func _release_attack() -> void:
 	is_charging = false
 	is_attacking = true
-	attack_area.scale.x = facing_dir
+	attack_area.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
 	attack_area.monitoring = true
 
 	# マスクを真下に振り下ろすアニメーション

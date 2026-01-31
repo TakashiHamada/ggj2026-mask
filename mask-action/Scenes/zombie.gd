@@ -25,16 +25,21 @@ var gravity: float = 900.0
 @onready var wall_check: RayCast2D = $WallCheck
 @onready var ground_check: RayCast2D = $GroundCheck if has_node("GroundCheck") else null
 @onready var sight_ray: RayCast2D = $SightRay
+@onready var health_bar: ProgressBar = $HealthBar
 
 var dir: int = 1
 var can_spit: bool = true
 var is_attacking: bool = false
 var player: Node2D = null
+var current_hp: float = ZombieConfig.MAX_HP
 
 func _ready() -> void:
 	_face_dir(dir)
 	_find_player()
 	sight_ray.enabled = true
+	current_hp = ZombieConfig.MAX_HP
+	health_bar.max_value = ZombieConfig.MAX_HP
+	health_bar.value = current_hp
 
 func _physics_process(delta: float) -> void:
 	# Gravity
@@ -278,7 +283,10 @@ func _update_animation() -> void:
 			anim.play("idle")
 
 func take_damage() -> void:
-	queue_free()
+	current_hp -= 1.0
+	health_bar.value = current_hp
+	if current_hp <= 0:
+		queue_free()
 
 func _on_hit_area_body_entered(body: Node) -> void:
 	if body.is_in_group("player") and body.has_method("die"):
