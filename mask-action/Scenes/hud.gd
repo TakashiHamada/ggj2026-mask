@@ -8,6 +8,6 @@ func _ready() -> void:
 	if player:
 		player.health_changed.connect(_on_player_health_changed)
 
-func _on_player_health_changed(current_hp: int, max_hp: int) -> void:
+func _on_player_health_changed(current_hp: float, max_hp: float) -> void:
 	health_bar.max_value = max_hp
 	health_bar.value = current_hp
