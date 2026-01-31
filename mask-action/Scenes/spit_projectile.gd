@@ -17,5 +17,6 @@ func set_direction(dir: Vector2) -> void:
 
 func _on_body_entered(body: Node) -> void:
 	if body.is_in_group("player"):
-		# TODO: damage player here
+		if body.has_method("die"):
+			body.die()
 		queue_free()
