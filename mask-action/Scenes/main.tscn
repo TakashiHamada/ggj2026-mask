@@ -3,8 +3,11 @@
 [ext_resource type="PackedScene" uid="uid://c36uba1keqcyl" path="res://Scenes/player.tscn" id="1_jjgbg"]
 [ext_resource type="PackedScene" uid="uid://c4a5ba708cafc" path="res://Scenes/zombie.tscn" id="3_8gbba"]
 [ext_resource type="TileSet" uid="uid://btileset32x32" path="res://tileset.tres" id="3_tileset"]
+[ext_resource type="PackedScene" path="res://Scenes/hud.tscn" id="4_hud"]
 
 [node name="main" type="Node2D"]
+
+[node name="HUD" parent="." instance=ExtResource("4_hud")]
 
 [node name="TileMapLayer" type="TileMapLayer" parent="."]
 position = Vector2(10, -25)
