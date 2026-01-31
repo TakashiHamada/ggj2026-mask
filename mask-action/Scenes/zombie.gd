@@ -18,6 +18,13 @@ var gravity: float = 900.0
 @export var los_max_distance: float = 260.0
 @export var los_y_offset: float = -6.0 # eye/mouth height
 
+# --- Hit reaction ---
+@export var hit_anim_name: StringName = &"hit"
+@export var hit_stun_time: float = 0.25
+
+var is_hit: bool = false
+
+
 # --- Ground aiming (raycast down from player) ---
 @export var ground_mask: int = 1 # set to the physics layer mask of ground/walls
 @export var ground_raycast_depth: float = 600.0
@@ -51,6 +58,14 @@ func _physics_process(delta: float) -> void:
 		velocity.y += gravity * delta
 	else:
 		velocity.y = 0.0
+
+	# If reacting to hit, do nothing
+	if is_hit:
+		move_and_slide()
+		return
+
+
+
 
 	# プラットフォームの速度を同期（プレイヤーがゾンビの上に乗れるように）
 	if platform:
@@ -299,3 +314,34 @@ func take_damage(amount: float = 1.0) -> void:
 func _on_hit_area_body_entered(body: Node) -> void:
 	if body.is_in_group("player") and body.has_method("die"):
 		body.die(true)  # マスクを無視して死亡
+
+
+func take_hit(damage: int = 1, attacker_pos: Vector2 = Vector2.INF) -> void:
+	if is_hit:
+		return
+
+	is_hit = true
+
+	# Interrupt attack
+	is_attacking = false
+	can_spit = true
+	anim.stop()
+
+	velocity = Vector2.ZERO
+
+	# Knockback AWAY from attacker (does not depend on zombie facing)
+	var knock_dir: int = 0
+	if attacker_pos != Vector2.INF:
+		var dx: float = global_position.x - attacker_pos.x
+		knock_dir = 1 if dx > 0.0 else -1
+	else:
+		knock_dir = dir # fallback
+
+	velocity.x = float(knock_dir) * 120.0
+
+	# Play hit animation
+	if anim.sprite_frames != null and anim.sprite_frames.has_animation(hit_anim_name):
+		anim.play(hit_anim_name)
+
+	await get_tree().create_timer(hit_stun_time).timeout
+	is_hit = false

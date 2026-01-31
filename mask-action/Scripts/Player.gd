@@ -234,6 +234,9 @@ func _on_attack_hit(body: Node) -> void:
 		return
 	if body.has_method("take_damage"):
 		body.take_damage(attack_damage)
+	if body.is_in_group("enemy"):
+		body.take_hit(1, global_position)
+
 	elif body.has_method("die"):
 		body.die()
 
