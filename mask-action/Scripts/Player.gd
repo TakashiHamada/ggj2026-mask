@@ -9,6 +9,9 @@ var is_dying: bool = false
 var is_attacking: bool = false
 var is_charging: bool = false  # 溜め中
 var facing_dir: int = 1  # 1 = 右, -1 = 左
+var charge_time: float = 0.0  # 溜め時間
+var attack_damage: float = 1.0  # 現在の攻撃力
+var is_fully_charged: bool = false  # 最大溜め状態
 
 var max_hp: float = 3.0
 var current_hp: float = 3.0
@@ -20,6 +23,7 @@ var current_hp: float = 3.0
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
 
 var blink_tween: Tween = null
+var charge_tween: Tween = null
 
 func _ready() -> void:
 	spawn_position = global_position
@@ -30,9 +34,17 @@ func _ready() -> void:
 	var shape := attack_shape.shape as RectangleShape2D
 	shape.size = Vector2(PlayerConfig.ATTACK_RANGE_X, PlayerConfig.ATTACK_RANGE_Y)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	has_gas_mask = Input.is_action_pressed("gas_mask")
 	gas_mask.visible = has_gas_mask or is_attacking or is_charging
+
+	# 溜め時間を加算
+	if is_charging:
+		charge_time += delta
+		# 最大溜めに達したら点滅開始
+		if not is_fully_charged and charge_time >= PlayerConfig.ATTACK_CHARGE_TIME:
+			is_fully_charged = true
+			_start_charge_effect()
 
 	# 攻撃入力（マスク装着中は攻撃不可）
 	if not is_dying and not has_gas_mask and not is_attacking:
@@ -54,8 +66,10 @@ func die(ignore_mask: bool = false) -> void:
 	if is_charging or is_attacking:
 		is_charging = false
 		is_attacking = false
+		is_fully_charged = false
 		attack_area.monitoring = false
 		gas_mask.position = Vector2(0, -4)
+		_stop_charge_effect()
 		sprite.play()
 
 	if current_hp <= 0:
@@ -116,14 +130,36 @@ const ATTACK_END_Y: float = 8.0      # 下の終了位置
 
 func _start_charge() -> void:
 	is_charging = true
+	charge_time = 0.0
+	is_fully_charged = false
 	sprite.pause()
 	# マスクを前方上部に構える
 	gas_mask.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
 	gas_mask.position.y = ATTACK_START_Y
 
+func _start_charge_effect() -> void:
+	if charge_tween:
+		charge_tween.kill()
+	charge_tween = create_tween().set_loops()
+	charge_tween.tween_property(sprite, "modulate", Color(1.0, 0.3, 0.3), PlayerConfig.CHARGE_FLASH_SPEED)
+	charge_tween.tween_property(sprite, "modulate", Color.WHITE, PlayerConfig.CHARGE_FLASH_SPEED)
+
+func _stop_charge_effect() -> void:
+	if charge_tween:
+		charge_tween.kill()
+		charge_tween = null
+	sprite.modulate = Color.WHITE
+
 func _release_attack() -> void:
 	is_charging = false
 	is_attacking = true
+	is_fully_charged = false
+	_stop_charge_effect()
+
+	# 溜め時間に応じてダメージを計算
+	var charge_ratio := clampf(charge_time / PlayerConfig.ATTACK_CHARGE_TIME, 0.0, 1.0)
+	attack_damage = lerpf(PlayerConfig.ATTACK_BASE_DAMAGE, PlayerConfig.ATTACK_MAX_DAMAGE, charge_ratio)
+
 	attack_area.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
 	attack_area.monitoring = true
 
@@ -147,7 +183,7 @@ func _on_attack_hit(body: Node) -> void:
 	if body == self:
 		return
 	if body.has_method("take_damage"):
-		body.take_damage()
+		body.take_damage(attack_damage)
 	elif body.has_method("die"):
 		body.die()
 
@@ -168,8 +204,10 @@ func _die_from_gas() -> void:
 	if is_charging or is_attacking:
 		is_charging = false
 		is_attacking = false
+		is_fully_charged = false
 		attack_area.monitoring = false
 		gas_mask.position = Vector2(0, -4)
+		_stop_charge_effect()
 		sprite.play()
 
 	is_dying = true

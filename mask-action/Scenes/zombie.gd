@@ -26,6 +26,7 @@ var gravity: float = 900.0
 @onready var ground_check: RayCast2D = $GroundCheck if has_node("GroundCheck") else null
 @onready var sight_ray: RayCast2D = $SightRay
 @onready var health_bar: ProgressBar = $HealthBar
+@onready var platform: CharacterBody2D = $Platform if has_node("Platform") else null
 
 var dir: int = 1
 var can_spit: bool = true
@@ -47,6 +48,10 @@ func _physics_process(delta: float) -> void:
 		velocity.y += gravity * delta
 	else:
 		velocity.y = 0.0
+
+	# プラットフォームの速度を同期（プレイヤーがゾンビの上に乗れるように）
+	if platform:
+		platform.velocity = velocity
 
 	# Re-acquire player if it spawns later
 	if player == null:
@@ -282,8 +287,8 @@ func _update_animation() -> void:
 		if anim.sprite_frames.has_animation(&"idle") and anim.animation != "idle":
 			anim.play("idle")
 
-func take_damage() -> void:
-	current_hp -= 1.0
+func take_damage(amount: float = 1.0) -> void:
+	current_hp -= amount
 	health_bar.value = current_hp
 	if current_hp <= 0:
 		queue_free()
