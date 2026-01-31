@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://dprjg4xtp5w6p"]
+[gd_scene format=3 uid="uid://dprjg4xtp5w6p"]
 
 [ext_resource type="Texture2D" uid="uid://dqdafmlb4aqhg" path="res://Zombies/Zombie.png" id="1_6nnp4"]
 [ext_resource type="Script" uid="uid://bev1lde5ywcgg" path="res://Scenes/spit_projectile.gd" id="2_qw5hs"]
