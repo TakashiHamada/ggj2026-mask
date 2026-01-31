@@ -1,3 +1,4 @@
+extends RefCounted
 class_name PlayerConfig
 
 const MOVE_SPEED: float = 150.0

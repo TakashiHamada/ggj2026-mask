@@ -19,8 +19,8 @@ func _process(_delta: float) -> void:
 	has_gas_mask = Input.is_action_pressed("gas_mask")
 	gas_mask.visible = has_gas_mask or is_attacking
 
-	# 攻撃入力
-	if Input.is_action_just_pressed("attack") and not is_attacking and not is_dying:
+	# 攻撃入力（マスク装着中は攻撃不可）
+	if Input.is_action_just_pressed("attack") and not is_attacking and not is_dying and not has_gas_mask:
 		_start_attack()
 
 func die(ignore_mask: bool = false) -> void:
