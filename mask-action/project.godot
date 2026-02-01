@@ -15,7 +15,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="MaskAction"
-run/main_scene="uid://dwvuwqpgt80tq"
+run/main_scene="uid://dn57n6eymsfhy"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 

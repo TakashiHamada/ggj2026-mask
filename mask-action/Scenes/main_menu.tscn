@@ -1,0 +1,34 @@
+[gd_scene load_steps=4 format=3 uid="uid://dn57n6eymsfhy"]
+
+[ext_resource type="Script" uid="uid://dmplp71yqfq7a" path="res://main_menu.gd" id="1_28flt"]
+[ext_resource type="Texture2D" uid="uid://b3xx2pjsmtki2" path="res://Assets/Mask.png" id="2_48xlc"]
+[ext_resource type="StyleBox" uid="uid://bbajovcgww2hp" path="res://Scenes/main_menu.tres" id="3_1ehe0"]
+
+[node name="main_menu" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_28flt")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 1536.0
+offset_bottom = 1024.0
+scale = Vector2(0.746529, 0.6354008)
+texture = ExtResource("2_48xlc")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 0
+offset_left = 529.0
+offset_top = 511.0
+offset_right = 635.0
+offset_bottom = 551.0
+
+[node name="start_button" type="Button" parent="CenterContainer"]
+layout_mode = 2
+theme_override_styles/normal = ExtResource("3_1ehe0")
+theme_override_styles/hover = ExtResource("3_1ehe0")
+text = "START GAME"
+
+[connection signal="pressed" from="CenterContainer/start_button" to="." method="_on_start_button_pressed"]
