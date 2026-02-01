@@ -30,6 +30,10 @@ var total_coins: int = 0
 @onready var attack_area: Area2D = $AttackArea
 @onready var attack_shape: CollisionShape2D = $AttackArea/CollisionShape2D
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
+@onready var footstep_sfx: AudioStreamPlayer2D = $FootstepSFX
+@onready var footstep_timer: Timer = $FootstepTimer
+
+var _move_input_x: float = 0.0
 
 var blink_tween: Tween = null
 var charge_tween: Tween = null
@@ -48,6 +52,12 @@ func _ready() -> void:
 	if coins_node:
 		total_coins = coins_node.get_child_count()
 	coins_changed.emit(coins, total_coins)
+
+	# Footsteps
+	footstep_timer.one_shot = false
+	footstep_timer.autostart = false
+	footstep_timer.timeout.connect(_on_footstep_timer_timeout)
+
 
 func _process(delta: float) -> void:
 	# マスク未取得なら能力使用不可
@@ -124,6 +134,7 @@ func _physics_process(delta: float) -> void:
 	# 死亡中は操作不能（重力は適用）
 	if is_dying:
 		move_and_slide()
+		handle_footsteps() # will stop timer
 		return
 
 	# 攻撃中・溜め中は移動不可（重力は適用）
@@ -139,6 +150,8 @@ func _physics_process(delta: float) -> void:
 	# 左右移動
 	var move_speed := PlayerConfig.MOVE_SPEED_WITH_MASK if has_gas_mask else PlayerConfig.MOVE_SPEED
 	var direction := Input.get_axis("move_left", "move_right")
+	_move_input_x = direction
+
 	if direction != 0:
 		velocity.x = direction * move_speed
 		sprite.flip_h = direction < 0
@@ -148,6 +161,8 @@ func _physics_process(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0, move_speed)
 
 	move_and_slide()
+	handle_footsteps()
+
 
 # 攻撃処理
 const ATTACK_START_Y: float = -12.0  # 上の開始位置
@@ -316,3 +331,29 @@ func _input(event: InputEvent) -> void:
 	if Input.is_action_just_pressed("jump") or Input.is_action_just_pressed("attack") or Input.is_action_just_pressed("gas_mask"):
 		get_tree().reload_current_scene()
 
+
+
+func handle_footsteps() -> void:
+	# Only play when:
+	# - on the floor
+	# - actually moving horizontally
+	# - not dying / attacking / charging
+	var can_step := (
+		is_on_floor()
+		and absf(velocity.x) > 5.0
+		and not is_dying
+		and not is_attacking
+		and not is_charging
+	)
+
+	if can_step:
+		if footstep_timer.is_stopped():
+			footstep_timer.start()
+	else:
+		if not footstep_timer.is_stopped():
+			footstep_timer.stop()
+
+func _on_footstep_timer_timeout() -> void:
+	# small pitch variation so it doesn't sound robotic
+	footstep_sfx.pitch_scale = randf_range(0.95, 1.05)
+	footstep_sfx.play()
