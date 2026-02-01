@@ -31,6 +31,11 @@ var is_dead: bool = false
 @export var ground_mask: int = 1 # set to the physics layer mask of ground/walls
 @export var ground_raycast_depth: float = 600.0
 
+@export var is_boss: bool = true
+@export var coin_scene: PackedScene
+@export var boss_coin_drop_count: int = 10
+@export var coin_scatter_radius: float = 24.0
+
 @export var debug_ai: bool = false
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
@@ -318,6 +323,7 @@ func take_damage(amount: float = 1.0) -> void:
 	health_bar.value = current_hp
 
 	if current_hp <= 0:
+		_spawn_boss_coins()
 		_die()
 
 func take_hit(damage: int = 1, attacker_pos: Vector2 = Vector2.INF) -> void:
@@ -413,3 +419,27 @@ func _on_hit_area_body_entered(body: Node) -> void:
 		return
 	if body.is_in_group("player") and body.has_method("die"):
 		body.die(true)  # マスクを無視して死亡
+
+
+
+func _spawn_boss_coins() -> void:
+	if not is_boss:
+		return
+	if coin_scene == null:
+		push_warning("Boss coin_scene is not assigned.")
+		return
+
+	# Prefer spawning under a 'Coins' node if it exists (nice for organization)
+	var parent_for_coins: Node = get_tree().current_scene.get_node_or_null("Coins")
+	if parent_for_coins == null:
+		parent_for_coins = get_parent()
+
+	for i in boss_coin_drop_count:
+		var coin := coin_scene.instantiate()
+		parent_for_coins.add_child(coin)
+
+		var offset := Vector2(
+			randf_range(-coin_scatter_radius, coin_scatter_radius),
+			randf_range(-coin_scatter_radius * 0.5, coin_scatter_radius * 0.5)
+		)
+		coin.global_position = global_position + offset
