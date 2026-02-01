@@ -55,6 +55,10 @@ func _ready() -> void:
 	var coins_node := get_tree().current_scene.get_node_or_null("Coins")
 	if coins_node:
 		total_coins = coins_node.get_child_count()
+	# 岩の中のコインもカウント
+	for node in get_tree().get_nodes_in_group("destructible_rocks"):
+		if node.has_method("get") and node.get("coin_count") != null:
+			total_coins += node.coin_count
 	coins_changed.emit(coins, total_coins)
 
 	# Footsteps
