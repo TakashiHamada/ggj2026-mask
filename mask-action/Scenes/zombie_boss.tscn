@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://chkvtgfvf2y1e"]
+
+[ext_resource type="PackedScene" uid="uid://c4a5ba708cafc" path="res://Scenes/zombie.tscn" id="1_m7jc0"]
+[ext_resource type="Script" uid="uid://dgyrpyng7twl8" path="res://Scenes/zombie_boss.gd" id="2_txsb8"]
+
+[node name="Zombie" instance=ExtResource("1_m7jc0")]
+scale = Vector2(1.6800001, 1.6800001)
+script = ExtResource("2_txsb8")
+spit_range = 200.0
+projectile_scene = null
+attack_anim_name = &"attack"
+spit_release_frame = 3
+can_attack = true
+
+[node name="AnimatedSprite2D" parent="." index="2"]
+animation = &"idle"
+frame = 0
+frame_progress = 0.0
