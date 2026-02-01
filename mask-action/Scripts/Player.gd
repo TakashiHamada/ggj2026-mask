@@ -34,6 +34,8 @@ var total_coins: int = 0
 @onready var footstep_timer: Timer = $FootstepTimer
 
 var _move_input_x: float = 0.0
+var coyote_timer: float = 0.0  # 床から離れてからの経過時間
+var jump_buffer: bool = false  # ジャンプ入力バッファ
 
 var blink_tween: Tween = null
 var charge_tween: Tween = null
@@ -127,6 +129,12 @@ func die(ignore_mask: bool = false) -> void:
 		_end_invincibility()
 
 func _physics_process(delta: float) -> void:
+	# コヨーテタイム（床から離れた後のジャンプ猶予）
+	if is_on_floor():
+		coyote_timer = 0.0
+	else:
+		coyote_timer += delta
+
 	# 重力
 	if not is_on_floor():
 		velocity.y += gravity * delta
@@ -143,9 +151,12 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		return
 
-	# ジャンプ
-	if Input.is_action_just_pressed("jump") and is_on_floor():
+	# ジャンプ（コヨーテタイム内なら空中でもジャンプ可能）
+	var can_jump := is_on_floor() or coyote_timer < PlayerConfig.COYOTE_TIME
+	if jump_buffer and can_jump:
 		velocity.y = PlayerConfig.JUMP_VELOCITY
+		coyote_timer = PlayerConfig.COYOTE_TIME  # ジャンプ後は猶予をリセット
+	jump_buffer = false  # バッファをクリア
 
 	# 左右移動
 	var move_speed := PlayerConfig.MOVE_SPEED_WITH_MASK if has_gas_mask else PlayerConfig.MOVE_SPEED
@@ -325,6 +336,10 @@ func _on_stage_clear() -> void:
 	velocity = Vector2.ZERO
 
 func _input(event: InputEvent) -> void:
+	# ジャンプ入力を即座にバッファリング
+	if event.is_action_pressed("jump"):
+		jump_buffer = true
+
 	if not is_stage_cleared:
 		return
 	# スペース、N、Mキーでリスタート
