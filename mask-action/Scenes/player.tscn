@@ -89,7 +89,7 @@ color = Color(0.55, 0.35, 0.15, 1)
 polygon = PackedVector2Array(-1, 0, 1, 0, 1, 6, -1, 6)
 
 [node name="Camera2D" type="Camera2D" parent="."]
-zoom = Vector2(4, 4)
+zoom = Vector2(3, 3)
 
 [node name="AttackArea" type="Area2D" parent="."]
 position = Vector2(10, 0)
