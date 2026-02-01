@@ -1,7 +1,7 @@
 extends Control
 
 @onready var fade: ColorRect = $Fade
-const GAME_SCENE := "res://scenes/Main.tscn"
+const GAME_SCENE := "res://Scenes/main.tscn"
 
 func _ready() -> void:
 	fade.modulate.a = 1.0
