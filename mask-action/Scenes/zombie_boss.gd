@@ -156,7 +156,7 @@ func _player_in_sight() -> bool:
 # Patrol movement
 # -----------------------------
 func _patrol() -> void:
-	velocity.x = float(dir) * ZombieConfig.MOVE_SPEED
+	velocity.x = float(dir) * ZombieConfig.BOSS_MOVE_SPEED
 
 	wall_check.force_raycast_update()
 	if wall_check.is_colliding():
