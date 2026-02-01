@@ -52,9 +52,8 @@ func _ready() -> void:
 	shape.size = Vector2(PlayerConfig.ATTACK_RANGE_X, PlayerConfig.ATTACK_RANGE_Y)
 	# ステージ内のコイン数をカウント
 	await get_tree().process_frame
-	var coins_node := get_tree().current_scene.get_node_or_null("Coins")
-	if coins_node:
-		total_coins = coins_node.get_child_count()
+	# coinsグループに属するコインをカウント
+	total_coins = get_tree().get_nodes_in_group("coins").size()
 	# 岩の中のコインもカウント
 	for node in get_tree().get_nodes_in_group("destructible_rocks"):
 		if node.has_method("get") and node.get("coin_count") != null:
