@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3 uid="uid://c4a5ba708cafc"]
+[gd_scene load_steps=38 format=3 uid="uid://c4a5ba708cafc"]
 
 [ext_resource type="Texture2D" uid="uid://dqdafmlb4aqhg" path="res://Zombies/Zombie.png" id="1_h3kin"]
 [ext_resource type="Script" uid="uid://chky4h0iaexck" path="res://Scenes/zombie.gd" id="1_n70j1"]
@@ -225,6 +225,20 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hitarea"]
 size = Vector2(28, 28)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
+bg_color = Color(0.8, 0.2, 0.2, 1)
+corner_radius_top_left = 1
+corner_radius_top_right = 1
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 1
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_fill"]
+bg_color = Color(0.5, 0.85, 0.3, 1)
+corner_radius_top_left = 1
+corner_radius_top_right = 1
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 1
+
 [node name="Zombie" type="CharacterBody2D" groups=["enemy"]]
 collision_layer = 4
 script = ExtResource("1_n70j1")
@@ -271,6 +285,8 @@ offset_left = -15.0
 offset_top = -20.0
 offset_right = 15.0
 offset_bottom = -15.0
+theme_override_styles/background = SubResource("StyleBoxFlat_hp_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
 max_value = 3.0
 value = 3.0
 show_percentage = false
