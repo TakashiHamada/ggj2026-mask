@@ -1,0 +1,73 @@
+[gd_scene load_steps=7 format=3 uid="uid://cy1p0fjntjttt"]
+
+[ext_resource type="Script" uid="uid://dmplp71yqfq7a" path="res://main_menu.gd" id="1_28flt"]
+[ext_resource type="Texture2D" uid="uid://b3xx2pjsmtki2" path="res://Assets/Mask.png" id="2_48xlc"]
+[ext_resource type="StyleBox" uid="uid://bbajovcgww2hp" path="res://Scenes/main_menu.tres" id="3_1ehe0"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1ehe0"]
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+bg_color = Color(0.11764706, 0.2, 1, 1)
+border_color = Color(0.8, 0.8, 0.8, 0)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ce3w2"]
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+bg_color = Color(0.11764706, 0.8039216, 1, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_n45e2"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_color = Color(0.8, 0.8, 0.8, 0)
+
+[node name="main_menu" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_28flt")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 1536.0
+offset_bottom = 1024.0
+scale = Vector2(0.746529, 0.6354008)
+texture = ExtResource("2_48xlc")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 0
+offset_left = 529.0
+offset_top = 511.0
+offset_right = 667.0
+offset_bottom = 574.0
+
+[node name="start_button" type="Button" parent="CenterContainer"]
+layout_mode = 2
+theme_override_styles/normal = ExtResource("3_1ehe0")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_1ehe0")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ce3w2")
+theme_override_styles/focus = SubResource("StyleBoxFlat_n45e2")
+text = "START GAME"
+
+[node name="Fade" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+scale = Vector2(430.41257, 16.224743)
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[connection signal="pressed" from="CenterContainer/start_button" to="." method="_on_start_button_pressed"]
