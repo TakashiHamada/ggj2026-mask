@@ -75,12 +75,25 @@ position = Vector2(0, 3)
 color = Color(0.25, 0.25, 0.25, 1)
 polygon = PackedVector2Array(-2, 0, 2, 0, 2, 3, -2, 3)
 
+[node name="Hammer" type="Node2D" parent="."]
+visible = false
+position = Vector2(0, -4)
+
+[node name="Head" type="Polygon2D" parent="Hammer"]
+color = Color(0.5, 0.5, 0.5, 1)
+polygon = PackedVector2Array(-4, -4, 4, -4, 4, 2, -4, 2)
+
+[node name="Handle" type="Polygon2D" parent="Hammer"]
+position = Vector2(0, 2)
+color = Color(0.55, 0.35, 0.15, 1)
+polygon = PackedVector2Array(-1, 0, 1, 0, 1, 6, -1, 6)
+
 [node name="Camera2D" type="Camera2D" parent="."]
 zoom = Vector2(4, 4)
 
 [node name="AttackArea" type="Area2D" parent="."]
 position = Vector2(10, 0)
-collision_mask = 4
+collision_mask = 68
 monitoring = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AttackArea"]
