@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3 uid="uid://c4a5ba708cafc"]
+[gd_scene load_steps=36 format=3 uid="uid://c4a5ba708cafc"]
 
 [ext_resource type="Texture2D" uid="uid://dqdafmlb4aqhg" path="res://Zombies/Zombie.png" id="1_h3kin"]
 [ext_resource type="Script" uid="uid://chky4h0iaexck" path="res://Scenes/zombie.gd" id="1_n70j1"]
@@ -11,6 +11,30 @@ size = Vector2(20, 26)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_platform"]
 size = Vector2(20, 4)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7x0ip"]
+atlas = ExtResource("1_h3kin")
+region = Rect2(64, 160, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ox8of"]
+atlas = ExtResource("1_h3kin")
+region = Rect2(96, 160, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b48it"]
+atlas = ExtResource("1_h3kin")
+region = Rect2(128, 160, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_swm38"]
+atlas = ExtResource("1_h3kin")
+region = Rect2(160, 160, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rifmc"]
+atlas = ExtResource("1_h3kin")
+region = Rect2(192, 160, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5tlni"]
+atlas = ExtResource("1_h3kin")
+region = Rect2(224, 160, 32, 32)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ofjqa"]
 atlas = ExtResource("1_h3kin")
@@ -94,6 +118,29 @@ region = Rect2(128, 160, 32, 32)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_jrf8t"]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7x0ip")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ox8of")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_b48it")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_swm38")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rifmc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5tlni")
+}],
+"loop": false,
+"name": &"death",
+"speed": 5.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_ofjqa")
@@ -202,8 +249,10 @@ one_way_collision = true
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 texture_filter = 1
 sprite_frames = SubResource("SpriteFrames_jrf8t")
-animation = &"hit"
+animation = &"death"
 autoplay = "idle"
+frame = 5
+frame_progress = 1.0
 
 [node name="WallCheck" type="RayCast2D" parent="."]
 position = Vector2(12, 0)

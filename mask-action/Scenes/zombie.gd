@@ -6,6 +6,8 @@ var gravity: float = 900.0
 @export var spit_range: float = 200.0
 @export var projectile_scene: PackedScene
 @export var attack_anim_name: StringName = &"attack" # or &"spit"
+@export var death_anim_name: StringName = &"death"
+
 @export var spit_release_frame: int = 3
 
 # --- Patrol behavior ---
@@ -362,29 +364,43 @@ func _die() -> void:
 		return
 	is_dead = true
 
-	# stop behavior
+	# Stop all behavior
 	is_attacking = false
 	can_spit = false
 	can_attack = false
 	is_hit = true
 	velocity = Vector2.ZERO
 
-	# disable collisions so it doesn't keep interacting
+	# Disable collisions so it can't interact anymore
 	set_deferred("collision_layer", 0)
 	set_deferred("collision_mask", 0)
 
-	# optionally hide UI
+	# Hide UI
 	if health_bar:
 		health_bar.visible = false
 
-	# play death sfx, then free
+	# Play death animation if it exists
+	if anim.sprite_frames != null and anim.sprite_frames.has_animation(death_anim_name):
+		anim.play(death_anim_name)
+	else:
+		anim.stop()
+
+	# Play death SFX
 	if death_sfx != null:
 		death_sfx.pitch_scale = randf_range(0.95, 1.05)
 		death_sfx.play()
-		call_deferred("_free_after_death_sfx")
 
+	# --- WAIT PHASE ---
+	# Prefer animation timing
+	if anim.is_playing() and anim.animation == String(death_anim_name):
+		await anim.animation_finished
+	elif death_sfx != null:
+		await death_sfx.finished
 	else:
-		queue_free()
+		await get_tree().create_timer(0.1).timeout
+
+	queue_free()
+
 
 func _free_after_death_sfx() -> void:
 	# Wait for sound without using lambdas
