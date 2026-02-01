@@ -27,3 +27,6 @@ const BOOMERANG_SPEED: float = 200.0         # ブーメランの速度
 const DAMAGE_STUN_TIME: float = 0.5  # ダメージ時の硬直時間（秒）
 const INVINCIBILITY_TIME: float = 1.0  # 無敵時間（秒）※硬直時間より長くすること
 const DEATH_RESPAWN_TIME: float = 1.0  # 死亡時のリスポーン時間（秒）
+
+# 回復
+const HEART_HEAL_AMOUNT: float = 1.0  # ハートアイテムの回復量

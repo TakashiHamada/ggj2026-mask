@@ -345,6 +345,10 @@ func add_coin(amount: int) -> void:
 	if coins >= total_coins and total_coins > 0:
 		_on_stage_clear()
 
+func heal(amount: float) -> void:
+	current_hp = minf(current_hp + amount, max_hp)
+	health_changed.emit(current_hp, max_hp)
+
 func _on_stage_clear() -> void:
 	stage_cleared.emit()
 	is_stage_cleared = true
