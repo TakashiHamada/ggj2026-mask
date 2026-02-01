@@ -4,12 +4,13 @@ signal health_changed(current_hp: float, max_hp: float)
 signal coins_changed(current_coins: int, total_coins: int)
 signal stage_cleared
 
-enum MaskType { NONE, MELEE, BOOMERANG }
+enum WeaponType { NONE, HAMMER, BOOMERANG }
 
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var spawn_position: Vector2
-var mask_type: MaskType = MaskType.NONE  # 所持しているマスクの種類
-var has_gas_mask: bool = false
+var has_mask: bool = false  # ガスマスクを所持しているか
+var weapon_type: WeaponType = WeaponType.NONE  # 所持している武器の種類
+var has_gas_mask: bool = false  # 現在ガスマスクを装着中か
 var is_boomerang_thrown: bool = false  # ブーメラン投げ中
 var is_dying: bool = false
 var is_attacking: bool = false
@@ -27,6 +28,7 @@ var total_coins: int = 0
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var gas_mask: Node2D = $GasMask
+@onready var hammer: Node2D = $Hammer
 @onready var attack_area: Area2D = $AttackArea
 @onready var attack_shape: CollisionShape2D = $AttackArea/CollisionShape2D
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
@@ -62,14 +64,17 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	# マスク未取得なら能力使用不可
-	if mask_type == MaskType.NONE:
+	# ガスマスク処理（マスク所持時のみ）
+	if has_mask:
+		has_gas_mask = Input.is_action_pressed("gas_mask") and not is_boomerang_thrown
+		gas_mask.visible = has_gas_mask
+	else:
 		has_gas_mask = false
 		gas_mask.visible = false
-		return
 
-	has_gas_mask = Input.is_action_pressed("gas_mask") and not is_boomerang_thrown
-	gas_mask.visible = (has_gas_mask or is_attacking or is_charging) and not is_boomerang_thrown
+	# 武器のビジュアル表示（攻撃中・溜め中）
+	if weapon_type == WeaponType.HAMMER:
+		hammer.visible = is_attacking or is_charging
 
 	# 溜め時間を加算
 	if is_charging:
@@ -79,15 +84,18 @@ func _process(delta: float) -> void:
 			is_fully_charged = true
 			_start_charge_effect()
 
-	# 攻撃入力（マスク装着中・ブーメラン投げ中は攻撃不可）
-	if not is_dying and not has_gas_mask and not is_attacking and not is_boomerang_thrown:
+	# 攻撃入力（武器所持時・ガスマスク装着中・ブーメラン投げ中は攻撃不可）
+	if weapon_type != WeaponType.NONE and not is_dying and not has_gas_mask and not is_attacking and not is_boomerang_thrown:
 		if Input.is_action_just_pressed("attack") and not is_charging:
 			_start_charge()
 		elif Input.is_action_just_released("attack") and is_charging:
 			_release_attack()
 
-func obtain_mask(type: MaskType = MaskType.MELEE) -> void:
-	mask_type = type
+func obtain_mask() -> void:
+	has_mask = true
+
+func obtain_weapon(type: WeaponType) -> void:
+	weapon_type = type
 
 func die(ignore_mask: bool = false) -> void:
 	if is_dying:
@@ -104,8 +112,9 @@ func die(ignore_mask: bool = false) -> void:
 		is_attacking = false
 		is_fully_charged = false
 		attack_area.monitoring = false
-		gas_mask.position = Vector2(0, -4)
-		gas_mask.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
+		hammer.position = Vector2(0, -4)
+		hammer.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
+		hammer.visible = false
 		_stop_charge_effect()
 		sprite.play()
 
@@ -188,10 +197,11 @@ func _start_charge() -> void:
 	charge_time = 0.0
 	is_fully_charged = false
 	sprite.pause()
-	# マスクを前方上部に構える（攻撃用に大きく）
-	gas_mask.scale = Vector2(2 * facing_dir, 2)
-	gas_mask.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
-	gas_mask.position.y = ATTACK_START_Y
+	# ハンマーを前方上部に構える
+	if weapon_type == WeaponType.HAMMER:
+		hammer.scale = Vector2(2 * facing_dir, 2)
+		hammer.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
+		hammer.position.y = ATTACK_START_Y
 
 func _start_charge_effect() -> void:
 	if charge_tween:
@@ -215,19 +225,19 @@ func _release_attack() -> void:
 	var charge_ratio := clampf(charge_time / PlayerConfig.ATTACK_CHARGE_TIME, 0.0, 1.0)
 	attack_damage = lerpf(PlayerConfig.ATTACK_BASE_DAMAGE, PlayerConfig.ATTACK_MAX_DAMAGE, charge_ratio)
 
-	if mask_type == MaskType.BOOMERANG:
+	if weapon_type == WeaponType.BOOMERANG:
 		_release_boomerang_attack()
 	else:
-		_release_melee_attack()
+		_release_hammer_attack()
 
-func _release_melee_attack() -> void:
+func _release_hammer_attack() -> void:
 	is_attacking = true
 	attack_area.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
 	attack_area.monitoring = true
 
-	# マスクを真下に振り下ろすアニメーション
+	# ハンマーを真下に振り下ろすアニメーション
 	var tween := create_tween()
-	tween.tween_property(gas_mask, "position:y", ATTACK_END_Y, 0.1)
+	tween.tween_property(hammer, "position:y", ATTACK_END_Y, 0.1)
 	tween.tween_callback(_end_attack)
 
 	# 攻撃判定（アニメーション中に重なっているボディをチェック）
@@ -237,9 +247,6 @@ func _release_melee_attack() -> void:
 
 func _release_boomerang_attack() -> void:
 	is_boomerang_thrown = true
-	gas_mask.visible = false
-	gas_mask.scale = Vector2(facing_dir, 1)
-	gas_mask.position = Vector2(0, -4)
 	sprite.play()
 
 	# ブーメランを生成
@@ -255,8 +262,8 @@ func on_boomerang_returned() -> void:
 func _end_attack() -> void:
 	is_attacking = false
 	attack_area.monitoring = false
-	gas_mask.position = Vector2(0, -4)  # 元の位置に戻す
-	gas_mask.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
+	hammer.position = Vector2(0, -4)  # 元の位置に戻す
+	hammer.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
 	sprite.play()  # アニメーション再開
 
 func _on_attack_hit(body: Node) -> void:
@@ -289,8 +296,9 @@ func _die_from_gas() -> void:
 		is_attacking = false
 		is_fully_charged = false
 		attack_area.monitoring = false
-		gas_mask.position = Vector2(0, -4)
-		gas_mask.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
+		hammer.position = Vector2(0, -4)
+		hammer.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
+		hammer.visible = false
 		_stop_charge_effect()
 		sprite.play()
 
