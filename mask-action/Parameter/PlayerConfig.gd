@@ -4,6 +4,8 @@ class_name PlayerConfig
 const MOVE_SPEED: float = 150.0
 const MOVE_SPEED_WITH_MASK: float = 80.0  # マスク装着時の移動速度
 const JUMP_VELOCITY: float = -350.0
+const JUMP_CUT_MULTIPLIER: float = 0.5  # 小ジャンプ時の上昇速度倍率（ボタンを早く離した時）
+const COYOTE_TIME: float = 0.1  # 床から離れた後もジャンプできる猶予時間（秒）
 const GAS_DAMAGE_PER_SECOND: float = .4  # 毒ガスで1秒あたりに受けるダメージ
 
 # 攻撃範囲
@@ -25,3 +27,6 @@ const BOOMERANG_SPEED: float = 200.0         # ブーメランの速度
 const DAMAGE_STUN_TIME: float = 0.5  # ダメージ時の硬直時間（秒）
 const INVINCIBILITY_TIME: float = 1.0  # 無敵時間（秒）※硬直時間より長くすること
 const DEATH_RESPAWN_TIME: float = 1.0  # 死亡時のリスポーン時間（秒）
+
+# 回復
+const HEART_HEAL_AMOUNT: float = 1.0  # ハートアイテムの回復量

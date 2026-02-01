@@ -1,0 +1,32 @@
+[gd_scene load_steps=3 format=3 uid="uid://coin_rock"]
+
+[ext_resource type="Script" path="res://Scripts/DestructibleRock.gd" id="1_script"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rock"]
+size = Vector2(32, 32)
+
+[node name="CoinRock" type="StaticBody2D" groups=["destructible_rocks"]]
+collision_layer = 65
+script = ExtResource("1_script")
+coin_count = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_rock")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="RockBody" type="Polygon2D" parent="Visual"]
+color = Color(0.45, 0.4, 0.35, 1)
+polygon = PackedVector2Array(-14, -14, -10, -16, 0, -15, 10, -16, 14, -14, 16, -8, 15, 0, 16, 8, 14, 14, 8, 16, 0, 15, -8, 16, -14, 14, -16, 6, -15, 0, -16, -8)
+
+[node name="Crack1" type="Polygon2D" parent="Visual"]
+color = Color(0.3, 0.25, 0.2, 1)
+polygon = PackedVector2Array(-2, -10, 0, -6, 2, -2, 0, 2, -1, 6)
+
+[node name="Crack2" type="Polygon2D" parent="Visual"]
+color = Color(0.3, 0.25, 0.2, 1)
+polygon = PackedVector2Array(4, -8, 6, -4, 8, 0, 6, 4)
+
+[node name="Highlight" type="Polygon2D" parent="Visual"]
+color = Color(0.55, 0.5, 0.45, 0.5)
+polygon = PackedVector2Array(-10, -12, -6, -14, 0, -13, -8, -8, -12, -6)

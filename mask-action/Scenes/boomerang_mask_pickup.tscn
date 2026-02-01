@@ -1,15 +1,15 @@
 [gd_scene load_steps=3 format=3 uid="uid://boomerang_mask_pickup"]
 
-[ext_resource type="Script" path="res://Scripts/MaskPickup.gd" id="1_script"]
+[ext_resource type="Script" path="res://Scripts/WeaponPickup.gd" id="1_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_pickup"]
 size = Vector2(16, 16)
 
-[node name="BoomerangMaskPickup" type="Area2D"]
+[node name="BoomerangPickup" type="Area2D"]
 collision_layer = 0
 collision_mask = 1
 script = ExtResource("1_script")
-mask_type = 2
+weapon_type = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_pickup")

@@ -4,6 +4,6 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 
 func _on_body_entered(body: Node) -> void:
-	if body.is_in_group("player") and body.has_method("obtain_mask"):
-		body.obtain_mask()
+	if body.is_in_group("player") and body.has_method("heal"):
+		body.heal(PlayerConfig.HEART_HEAL_AMOUNT)
 		queue_free()
