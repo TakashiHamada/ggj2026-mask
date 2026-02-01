@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=4 uid="uid://dwvuwqpgt80tq"]
+[gd_scene load_steps=9 format=4 uid="uid://dwvuwqpgt80tq"]
 
 [ext_resource type="PackedScene" path="res://Scenes/mask_pickup.tscn" id="1_6bp64"]
 [ext_resource type="PackedScene" uid="uid://c36uba1keqcyl" path="res://Scenes/player.tscn" id="1_jjgbg"]
@@ -7,6 +7,7 @@
 [ext_resource type="TileSet" uid="uid://btileset32x32" path="res://tileset.tres" id="3_tileset"]
 [ext_resource type="PackedScene" path="res://Scenes/hud.tscn" id="4_hud"]
 [ext_resource type="PackedScene" uid="uid://r40pqapdd5gc" path="res://Scenes/coin.tscn" id="6_21xkr"]
+[ext_resource type="PackedScene" path="res://Scenes/boomerang_mask_pickup.tscn" id="8_344ge"]
 
 [node name="main" type="Node2D"]
 
@@ -94,6 +95,9 @@ position = Vector2(92, -174)
 
 [node name="Coin12" parent="Coins" instance=ExtResource("6_21xkr")]
 position = Vector2(127, -174)
+
+[node name="BoomerangMaskPickup" parent="." instance=ExtResource("8_344ge")]
+position = Vector2(199, 310)
 
 [connection signal="body_entered" from="TileMapLayer/PoisonGas" to="TileMapLayer/PoisonGas" method="_on_body_entered"]
 [connection signal="body_exited" from="TileMapLayer/PoisonGas" to="TileMapLayer/PoisonGas" method="_on_body_exited"]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://cy1p0fjntjttt"]
+[gd_scene load_steps=7 format=3 uid="uid://cy1p0fjntjttt"]
 
 [ext_resource type="Script" uid="uid://dmplp71yqfq7a" path="res://main_menu.gd" id="1_28flt"]
 [ext_resource type="Texture2D" uid="uid://b3xx2pjsmtki2" path="res://Assets/Mask.png" id="2_48xlc"]
@@ -29,6 +29,10 @@ corner_radius_bottom_right = 16
 corner_radius_bottom_left = 16
 shadow_size = 6
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_n45e2"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_color = Color(0.8, 0.8, 0.8, 0)
+
 [node name="main_menu" type="Control"]
 layout_mode = 3
 anchors_preset = 0
@@ -55,6 +59,7 @@ layout_mode = 2
 theme_override_styles/normal = ExtResource("3_1ehe0")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_1ehe0")
 theme_override_styles/hover = SubResource("StyleBoxFlat_ce3w2")
+theme_override_styles/focus = SubResource("StyleBoxFlat_n45e2")
 text = "START GAME"
 
 [node name="Fade" type="ColorRect" parent="."]
