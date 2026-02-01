@@ -23,7 +23,7 @@ var gravity: float = 900.0
 @export var hit_stun_time: float = 0.25
 
 var is_hit: bool = false
-
+var is_dead: bool = false
 
 # --- Ground aiming (raycast down from player) ---
 @export var ground_mask: int = 1 # set to the physics layer mask of ground/walls
@@ -37,6 +37,10 @@ var is_hit: bool = false
 @onready var sight_ray: RayCast2D = $SightRay
 @onready var health_bar: ProgressBar = $HealthBar
 @onready var platform: CharacterBody2D = $Platform if has_node("Platform") else null
+
+# SFX (safe even if node missing)
+@onready var hit_sfx: AudioStreamPlayer2D = get_node_or_null("HitSFX") as AudioStreamPlayer2D
+@onready var death_sfx: AudioStreamPlayer2D = get_node_or_null("DeathSFX") as AudioStreamPlayer2D
 
 var dir: int = 1
 var can_spit: bool = true
@@ -53,6 +57,9 @@ func _ready() -> void:
 	health_bar.value = current_hp
 
 func _physics_process(delta: float) -> void:
+	if is_dead:
+		return
+
 	# Gravity
 	if not is_on_floor():
 		velocity.y += gravity * delta
@@ -63,9 +70,6 @@ func _physics_process(delta: float) -> void:
 	if is_hit:
 		move_and_slide()
 		return
-
-
-
 
 	# プラットフォームの速度を同期（プレイヤーがゾンビの上に乗れるように）
 	if platform:
@@ -109,7 +113,6 @@ func _physics_process(delta: float) -> void:
 	if in_range and in_sight and can_spit and can_attack:
 		_start_spit_attack()
 	else:
-		# Not visible -> resume patrol immediately
 		_patrol()
 
 	move_and_slide()
@@ -163,8 +166,7 @@ func _patrol() -> void:
 			_turn_around()
 
 # -----------------------------
-# Spit attack (frame-perfect, LOS-aware)
-# Works even if attack anim loops: ends when last frame is reached.
+# Spit attack
 # -----------------------------
 func _start_spit_attack() -> void:
 	can_spit = false
@@ -192,6 +194,9 @@ func _start_spit_attack() -> void:
 	while is_attacking and anim.animation == String(attack_anim_name):
 		await anim.frame_changed
 
+		if is_dead:
+			return
+
 		# Abort if LOS is lost
 		if player == null or not _player_in_sight():
 			is_attacking = false
@@ -204,15 +209,13 @@ func _start_spit_attack() -> void:
 			_spawn_spit()
 			spawned = true
 
-		# End attack when last frame reached (prevents stuck if looping)
+		# End attack when last frame reached
 		if anim.frame >= last_frame:
 			is_attacking = false
 			break
 
-	# Force exit attack pose
 	anim.stop()
 
-	# Cooldown
 	await get_tree().create_timer(ZombieConfig.SPIT_COOLDOWN).timeout
 	can_spit = true
 
@@ -225,11 +228,9 @@ func _spawn_spit() -> void:
 	var spit: Node = projectile_scene.instantiate()
 	get_parent().add_child(spit)
 
-	# Spawn near mouth
 	var mouth_offset := Vector2(10.0 * float(dir), los_y_offset)
 	spit.global_position = global_position + mouth_offset
 
-	# Aim at the player's ground point (not their air position)
 	var target_pos := _get_player_ground_point()
 	var aim: Vector2 = (target_pos - spit.global_position).normalized()
 
@@ -287,7 +288,6 @@ func _turn_around() -> void:
 
 func _face_dir(new_dir: int) -> void:
 	anim.flip_h = (new_dir < 0)
-
 	wall_check.target_position.x = abs(wall_check.target_position.x) * float(new_dir)
 	if ground_check != null:
 		ground_check.target_position.x = abs(ground_check.target_position.x) * float(new_dir)
@@ -305,19 +305,26 @@ func _update_animation() -> void:
 		if anim.sprite_frames.has_animation(&"idle") and anim.animation != "idle":
 			anim.play("idle")
 
+# -----------------------------
+# Damage / hit / death
+# -----------------------------
 func take_damage(amount: float = 1.0) -> void:
+	if is_dead:
+		return
+
 	current_hp -= amount
 	health_bar.value = current_hp
+
 	if current_hp <= 0:
-		queue_free()
-
-func _on_hit_area_body_entered(body: Node) -> void:
-	if body.is_in_group("player") and body.has_method("die"):
-		body.die(true)  # マスクを無視して死亡
-
+		_die()
 
 func take_hit(damage: int = 1, attacker_pos: Vector2 = Vector2.INF) -> void:
-	if is_hit:
+	if is_dead or is_hit:
+		return
+
+	# Apply damage
+	take_damage(float(damage))
+	if is_dead:
 		return
 
 	is_hit = true
@@ -326,16 +333,20 @@ func take_hit(damage: int = 1, attacker_pos: Vector2 = Vector2.INF) -> void:
 	is_attacking = false
 	can_spit = true
 	anim.stop()
-
 	velocity = Vector2.ZERO
 
-	# Knockback AWAY from attacker (does not depend on zombie facing)
-	var knock_dir: int = 0
+	# Play hit SFX
+	if hit_sfx != null:
+		hit_sfx.pitch_scale = randf_range(0.95, 1.05)
+		hit_sfx.play()
+
+	# Knockback away from attacker
+	var knock_dir: int
 	if attacker_pos != Vector2.INF:
 		var dx: float = global_position.x - attacker_pos.x
 		knock_dir = 1 if dx > 0.0 else -1
 	else:
-		knock_dir = dir # fallback
+		knock_dir = dir
 
 	velocity.x = float(knock_dir) * 120.0
 
@@ -345,3 +356,44 @@ func take_hit(damage: int = 1, attacker_pos: Vector2 = Vector2.INF) -> void:
 
 	await get_tree().create_timer(hit_stun_time).timeout
 	is_hit = false
+
+func _die() -> void:
+	if is_dead:
+		return
+	is_dead = true
+
+	# stop behavior
+	is_attacking = false
+	can_spit = false
+	can_attack = false
+	is_hit = true
+	velocity = Vector2.ZERO
+
+	# disable collisions so it doesn't keep interacting
+	set_deferred("collision_layer", 0)
+	set_deferred("collision_mask", 0)
+
+	# optionally hide UI
+	if health_bar:
+		health_bar.visible = false
+
+	# play death sfx, then free
+	if death_sfx != null:
+		death_sfx.pitch_scale = randf_range(0.95, 1.05)
+		death_sfx.play()
+		call_deferred("_free_after_death_sfx")
+
+	else:
+		queue_free()
+
+func _free_after_death_sfx() -> void:
+	# Wait for sound without using lambdas
+	if death_sfx != null:
+		await death_sfx.finished
+	queue_free()
+
+func _on_hit_area_body_entered(body: Node) -> void:
+	if is_dead:
+		return
+	if body.is_in_group("player") and body.has_method("die"):
+		body.die(true)  # マスクを無視して死亡

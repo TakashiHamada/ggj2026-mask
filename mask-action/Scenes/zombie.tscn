@@ -1,8 +1,10 @@
-[gd_scene load_steps=28 format=3 uid="uid://c4a5ba708cafc"]
+[gd_scene load_steps=30 format=3 uid="uid://c4a5ba708cafc"]
 
 [ext_resource type="Texture2D" uid="uid://dqdafmlb4aqhg" path="res://Zombies/Zombie.png" id="1_h3kin"]
 [ext_resource type="Script" uid="uid://chky4h0iaexck" path="res://Scenes/zombie.gd" id="1_n70j1"]
 [ext_resource type="PackedScene" uid="uid://dprjg4xtp5w6p" path="res://Scenes/spit_projectile.tscn" id="2_iyl7r"]
+[ext_resource type="AudioStream" uid="uid://fwc6pt7fq173" path="res://Audio/monster-attack-47786.mp3" id="4_vy0uf"]
+[ext_resource type="AudioStream" uid="uid://ddo4ock2idabc" path="res://Audio/monster-death-grunt-131480.mp3" id="5_w2xga"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h3kin"]
 size = Vector2(20, 26)
@@ -230,5 +232,14 @@ collision_layer = 0
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HitArea"]
 position = Vector2(0, 2)
 shape = SubResource("RectangleShape2D_hitarea")
+
+[node name="HitSFX" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("4_vy0uf")
+volume_db = 6.0
+pitch_scale = 0.5
+
+[node name="DeathSFX" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("5_w2xga")
+volume_db = 8.0
 
 [connection signal="body_entered" from="HitArea" to="." method="_on_hit_area_body_entered"]
