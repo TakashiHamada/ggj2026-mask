@@ -51,11 +51,10 @@ func _on_body_entered(body: Node) -> void:
 
 func _on_area_entered(area: Area2D) -> void:
 	# コインを取得
-	if area.has_method("_on_body_entered") and player:
-		# コインのスクリプトはbody_enteredでプレイヤーを渡すとコインを追加する
-		if area.get("value") != null:
-			player.add_coin(area.value)
-			area.queue_free()
+	if player and area.is_in_group("coins"):
+		var value: int = area.get("value") if area.get("value") != null else 1
+		player.add_coin(value)
+		area.queue_free()
 
 func _return_to_player() -> void:
 	if player and player.has_method("on_boomerang_returned"):

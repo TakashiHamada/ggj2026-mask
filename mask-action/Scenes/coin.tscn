@@ -56,7 +56,7 @@ animations = [{
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_jgi06"]
 
-[node name="Coin" type="Area2D"]
+[node name="Coin" type="Area2D" groups=["coins"]]
 scale = Vector2(1.3200006, 1.3200006)
 collision_layer = 16
 script = ExtResource("1_jgi06")

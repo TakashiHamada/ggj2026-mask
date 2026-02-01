@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://cy1p0fjntjttt"]
+[gd_scene format=3 uid="uid://cy1p0fjntjttt"]
 
 [ext_resource type="Script" uid="uid://dmplp71yqfq7a" path="res://main_menu.gd" id="1_28flt"]
 [ext_resource type="Texture2D" uid="uid://b3xx2pjsmtki2" path="res://Assets/Mask.png" id="2_48xlc"]
