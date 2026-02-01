@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://dgyrpyng7twl8" path="res://Scenes/zombie_boss.gd" id="2_txsb8"]
 [ext_resource type="PackedScene" uid="uid://r40pqapdd5gc" path="res://Scenes/coin.tscn" id="3_tqwci"]
 
-[node name="Zombie" instance=ExtResource("1_m7jc0")]
+[node name="Zombie" instance=ExtResource("1_m7jc0") groups=["zombie_bosses"]]
 scale = Vector2(1.6800001, 1.6800001)
 script = ExtResource("2_txsb8")
 spit_range = 200.0

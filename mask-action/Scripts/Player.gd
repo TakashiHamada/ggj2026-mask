@@ -59,6 +59,10 @@ func _ready() -> void:
 	for node in get_tree().get_nodes_in_group("destructible_rocks"):
 		if node.has_method("get") and node.get("coin_count") != null:
 			total_coins += node.coin_count
+	# ゾンビボスがドロップするコインもカウント
+	for node in get_tree().get_nodes_in_group("zombie_bosses"):
+		if node.has_method("get") and node.get("boss_coin_drop_count") != null:
+			total_coins += node.boss_coin_drop_count
 	coins_changed.emit(coins, total_coins)
 
 	# Footsteps
