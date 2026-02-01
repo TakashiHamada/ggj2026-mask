@@ -158,6 +158,10 @@ func _physics_process(delta: float) -> void:
 		coyote_timer = PlayerConfig.COYOTE_TIME  # ジャンプ後は猶予をリセット
 	jump_buffer = false  # バッファをクリア
 
+	# 小ジャンプ（上昇中にボタンを離すと減速）
+	if Input.is_action_just_released("jump") and velocity.y < 0:
+		velocity.y *= PlayerConfig.JUMP_CUT_MULTIPLIER
+
 	# 左右移動
 	var move_speed := PlayerConfig.MOVE_SPEED_WITH_MASK if has_gas_mask else PlayerConfig.MOVE_SPEED
 	var direction := Input.get_axis("move_left", "move_right")
