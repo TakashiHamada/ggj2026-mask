@@ -1,0 +1,72 @@
+[gd_scene load_steps=7 format=3 uid="uid://nm0u285dah73"]
+
+[ext_resource type="Script" uid="uid://c07x0n5pnlbyw" path="res://Scenes/level_clear.gd" id="1_2sm0d"]
+[ext_resource type="StyleBox" uid="uid://bbajovcgww2hp" path="res://Scenes/main_menu.tres" id="1_7k5mv"]
+[ext_resource type="Texture2D" uid="uid://b368bu5udxai6" path="res://Assets/levelclear.png" id="1_cglsa"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cglsa"]
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+bg_color = Color(0.11764706, 0.2, 1, 1)
+border_color = Color(0.8, 0.8, 0.8, 0)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2sm0d"]
+content_margin_left = 20.0
+content_margin_top = 20.0
+content_margin_right = 20.0
+content_margin_bottom = 20.0
+bg_color = Color(0.11764706, 0.8039216, 1, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dpojq"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_color = Color(0.8, 0.8, 0.8, 0)
+
+[node name="LevelClear" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_2sm0d")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+scale = Vector2(0.7599995, 0.6399995)
+texture = ExtResource("1_cglsa")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 0
+offset_left = 479.0
+offset_top = 511.0
+offset_right = 625.0
+offset_bottom = 574.0
+
+[node name="restart_game" type="Button" parent="CenterContainer"]
+layout_mode = 2
+theme_override_styles/normal = ExtResource("1_7k5mv")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_cglsa")
+theme_override_styles/hover = SubResource("StyleBoxFlat_2sm0d")
+theme_override_styles/focus = SubResource("StyleBoxFlat_dpojq")
+text = "Restart Game
+"
+
+[node name="Fade" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 2.711352
+offset_bottom = 18.8735
+scale = Vector2(430.41257, 34.704742)
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[connection signal="pressed" from="CenterContainer/restart_game" to="." method="_on_restart_game_button_pressed"]

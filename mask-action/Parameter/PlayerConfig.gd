@@ -29,4 +29,4 @@ const INVINCIBILITY_TIME: float = 1.0  # 無敵時間（秒）※硬直時間よ
 const DEATH_RESPAWN_TIME: float = 1.0  # 死亡時のリスポーン時間（秒）
 
 # 回復
-const HEART_HEAL_AMOUNT: float = 1.0  # ハートアイテムの回復量
+const HEART_HEAL_AMOUNT: float = 2.0  # ハートアイテムの回復量

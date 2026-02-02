@@ -1,7 +1,7 @@
-[gd_scene format=3 uid="uid://cy1p0fjntjttt"]
+[gd_scene load_steps=7 format=3 uid="uid://cy1p0fjntjttt"]
 
 [ext_resource type="Script" uid="uid://dmplp71yqfq7a" path="res://main_menu.gd" id="1_28flt"]
-[ext_resource type="Texture2D" uid="uid://b3xx2pjsmtki2" path="res://Assets/Mask.png" id="2_48xlc"]
+[ext_resource type="Texture2D" uid="uid://cuwbhd52ssa61" path="res://Assets/titelscreen.png" id="2_1ehe0"]
 [ext_resource type="StyleBox" uid="uid://bbajovcgww2hp" path="res://Scenes/main_menu.tres" id="3_1ehe0"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1ehe0"]
@@ -45,7 +45,7 @@ layout_mode = 0
 offset_right = 1536.0
 offset_bottom = 1024.0
 scale = Vector2(0.746529, 0.6354008)
-texture = ExtResource("2_48xlc")
+texture = ExtResource("2_1ehe0")
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 0
@@ -64,9 +64,9 @@ text = "START GAME"
 
 [node name="Fade" type="ColorRect" parent="."]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-scale = Vector2(430.41257, 16.224743)
+offset_right = 2.664885
+offset_bottom = 18.367008
+scale = Vector2(430.41257, 34.704742)
 mouse_filter = 2
 color = Color(0, 0, 0, 1)
 

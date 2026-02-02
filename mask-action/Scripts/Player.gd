@@ -21,8 +21,8 @@ var attack_damage: float = 1.0  # 現在の攻撃力
 var is_fully_charged: bool = false  # 最大溜め状態
 var is_stage_cleared: bool = false  # ステージクリア状態
 
-var max_hp: float = 3.0
-var current_hp: float = 3.0
+var max_hp: float = 6.0
+var current_hp: float = 6.0
 var coins: int = 0
 var total_coins: int = 0
 
@@ -35,9 +35,21 @@ var total_coins: int = 0
 @onready var footstep_sfx: AudioStreamPlayer2D = $FootstepSFX
 @onready var footstep_timer: Timer = $FootstepTimer
 
-# --- Run animation (ADDED) ---
+# --- Run animation ---
 @export var run_anim_name: StringName = &"run"
 var _idle_anim_name: StringName
+
+# --- Dust trail ---
+@export var dust_scene: PackedScene
+@export var dust_interval: float = 0.08
+@export var dust_back_offset_x: float = 6.0  # behind feet
+@export var dust_up_offset_y: float = 2.0    # lift slightly above floor
+var _dust_timer: float = 0.0
+
+# --- Level clear transition (ADDED) ---
+const LEVEL_CLEAR_SCENE := "res://Scenes/level_clear.tscn"
+var _is_transitioning: bool = false
+@onready var fade: ColorRect = get_tree().current_scene.get_node_or_null("Fade")
 
 var _move_input_x: float = 0.0
 var coyote_timer: float = 0.0  # 床から離れてからの経過時間
@@ -45,6 +57,7 @@ var jump_buffer: bool = false  # ジャンプ入力バッファ
 
 var blink_tween: Tween = null
 var charge_tween: Tween = null
+
 
 func _ready() -> void:
 	spawn_position = global_position
@@ -81,6 +94,10 @@ func _ready() -> void:
 	footstep_timer.autostart = false
 	footstep_timer.timeout.connect(_on_footstep_timer_timeout)
 
+	# Ensure fade starts transparent if present
+	if fade:
+		fade.modulate.a = 0.0
+
 
 func _process(delta: float) -> void:
 	# ガスマスク処理（マスク所持時のみ）
@@ -111,20 +128,17 @@ func _process(delta: float) -> void:
 			_release_attack()
 
 
-# --- Animation update (ADDED) ---
 func _update_animation() -> void:
-	# Don't override attack/charge/dying (you control sprite.pause/play there)
-	if is_dying or is_attacking or is_charging:
+	# Don't override attack/charge/dying
+	if is_dying or is_attacking or is_charging or _is_transitioning:
 		return
 
-	# If we don't have an idle name, do nothing
 	if _idle_anim_name == StringName():
 		return
 
-	# Use input to decide "moving" (reliable) and avoid run sticking
 	var moving := absf(_move_input_x) > 0.01
 
-	# If airborne, don't force run (fallback to idle/default)
+	# In air: don't force run
 	if not is_on_floor():
 		if sprite.sprite_frames.has_animation(_idle_anim_name) and sprite.animation != _idle_anim_name:
 			sprite.play(_idle_anim_name)
@@ -134,9 +148,45 @@ func _update_animation() -> void:
 		if sprite.sprite_frames.has_animation(run_anim_name) and sprite.animation != run_anim_name:
 			sprite.play(run_anim_name)
 	else:
-		# Switch back to default/idle explicitly
 		if sprite.sprite_frames.has_animation(_idle_anim_name) and sprite.animation != _idle_anim_name:
 			sprite.play(_idle_anim_name)
+
+
+# Feet spawn for RectangleShape2D 16x16
+func _get_feet_spawn_global() -> Vector2:
+	var half_h := 8.0
+	var scale_y := collision_shape.global_scale.y
+	var feet_y := collision_shape.global_position.y + (half_h * scale_y) - dust_up_offset_y
+	var feet_x := collision_shape.global_position.x - (facing_dir * dust_back_offset_x)
+	return Vector2(feet_x, feet_y)
+
+
+func _spawn_dust() -> void:
+	if dust_scene == null:
+		return
+
+	var dust := dust_scene.instantiate() as GPUParticles2D
+	if dust == null:
+		return
+
+	# Add to WORLD
+	get_tree().current_scene.add_child(dust)
+
+	# Ignore parent transforms (prevents screen-edge bug)
+	dust.top_level = true
+
+	# Position at feet
+	dust.global_position = _get_feet_spawn_global()
+
+	# Emit once
+	dust.one_shot = true
+	dust.emitting = true
+
+	# Cleanup
+	var life := dust.lifetime
+	await get_tree().create_timer(life).timeout
+	if is_instance_valid(dust):
+		dust.queue_free()
 
 
 func obtain_mask() -> void:
@@ -144,6 +194,7 @@ func obtain_mask() -> void:
 
 func obtain_weapon(type: WeaponType) -> void:
 	weapon_type = type
+
 
 func die(ignore_mask: bool = false) -> void:
 	if is_dying:
@@ -167,12 +218,14 @@ func die(ignore_mask: bool = false) -> void:
 		sprite.play()
 
 	if current_hp <= 0:
+		# 死亡：ステージリセット
 		is_dying = true
 		velocity = Vector2.ZERO
 		_start_invincibility()
 		await get_tree().create_timer(PlayerConfig.DEATH_RESPAWN_TIME).timeout
 		get_tree().reload_current_scene()
 	else:
+		# ダメージを受けたが生存：硬直＋無敵時間
 		is_dying = true
 		velocity = Vector2.ZERO
 		_start_invincibility()
@@ -194,6 +247,13 @@ func _physics_process(delta: float) -> void:
 	# 重力
 	if not is_on_floor():
 		velocity.y += gravity * delta
+
+	# Transitioning: lock control
+	if _is_transitioning:
+		velocity = Vector2.ZERO
+		move_and_slide()
+		handle_footsteps()
+		return
 
 	# 死亡中は操作不能（重力は適用）
 	if is_dying:
@@ -234,8 +294,24 @@ func _physics_process(delta: float) -> void:
 		if absf(velocity.x) < 1.0:
 			velocity.x = 0.0
 
-	# Update run/idle
 	_update_animation()
+
+	# Dust trail
+	var running_on_ground := (
+		is_on_floor()
+		and absf(_move_input_x) > 0.01
+		and not is_dying
+		and not is_attacking
+		and not is_charging
+	)
+
+	if running_on_ground:
+		_dust_timer -= delta
+		if _dust_timer <= 0.0:
+			_dust_timer = dust_interval
+			_spawn_dust()
+	else:
+		_dust_timer = 0.0
 
 	move_and_slide()
 	handle_footsteps()
@@ -250,6 +326,7 @@ func _start_charge() -> void:
 	charge_time = 0.0
 	is_fully_charged = false
 	sprite.pause()
+	# ハンマーを前方上部に構える
 	if weapon_type == WeaponType.HAMMER:
 		hammer.scale = Vector2(2 * facing_dir, 2)
 		hammer.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
@@ -273,6 +350,7 @@ func _release_attack() -> void:
 	is_fully_charged = false
 	_stop_charge_effect()
 
+	# 溜め時間に応じてダメージを計算
 	var charge_ratio := clampf(charge_time / PlayerConfig.ATTACK_CHARGE_TIME, 0.0, 1.0)
 	attack_damage = lerpf(PlayerConfig.ATTACK_BASE_DAMAGE, PlayerConfig.ATTACK_MAX_DAMAGE, charge_ratio)
 
@@ -286,10 +364,12 @@ func _release_hammer_attack() -> void:
 	attack_area.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
 	attack_area.monitoring = true
 
+	# ハンマーを真下に振り下ろすアニメーション
 	var tween := create_tween()
 	tween.tween_property(hammer, "position:y", ATTACK_END_Y, 0.1)
 	tween.tween_callback(_end_attack)
 
+	# 攻撃判定（アニメーション中に重なっているボディをチェック）
 	await get_tree().physics_frame
 	for body in attack_area.get_overlapping_bodies():
 		_on_attack_hit(body)
@@ -298,6 +378,7 @@ func _release_boomerang_attack() -> void:
 	is_boomerang_thrown = true
 	sprite.play()
 
+	# ブーメランを生成
 	var boomerang_scene := preload("res://Scenes/boomerang.tscn")
 	var boomerang := boomerang_scene.instantiate()
 	get_parent().add_child(boomerang)
@@ -312,7 +393,7 @@ func _end_attack() -> void:
 	attack_area.monitoring = false
 	hammer.position = Vector2(0, -4)
 	hammer.scale = Vector2(facing_dir, 1)
-	sprite.play()
+	sprite.play()  # アニメーション再開
 
 func _on_attack_hit(body: Node) -> void:
 	if body == self:
@@ -337,6 +418,7 @@ func take_gas_damage(delta: float) -> void:
 		_die_from_gas()
 
 func _die_from_gas() -> void:
+	# 溜め中・攻撃中だった場合はキャンセル
 	if is_charging or is_attacking:
 		is_charging = false
 		is_attacking = false
@@ -354,24 +436,31 @@ func _die_from_gas() -> void:
 	await get_tree().create_timer(PlayerConfig.DEATH_RESPAWN_TIME).timeout
 	get_tree().reload_current_scene()
 
+# 無敵状態の開始（点滅＋敵すり抜け）
 func _start_invincibility() -> void:
+	# 敵との当たり判定を無効化（レイヤー8に移動）
 	set_collision_layer_value(1, false)
 	set_collision_layer_value(8, true)
 
+	# 点滅開始
 	if blink_tween:
 		blink_tween.kill()
 	blink_tween = create_tween().set_loops()
 	blink_tween.tween_property(sprite, "modulate:a", 0.3, 0.08)
 	blink_tween.tween_property(sprite, "modulate:a", 1.0, 0.08)
 
+# 無敵状態の終了
 func _end_invincibility() -> void:
+	# 当たり判定を元に戻す
 	set_collision_layer_value(8, false)
 	set_collision_layer_value(1, true)
 
+	# 点滅停止
 	if blink_tween:
 		blink_tween.kill()
 		blink_tween = null
 	sprite.modulate.a = 1.0
+
 
 func add_coin(amount: int) -> void:
 	coins += amount
@@ -383,29 +472,52 @@ func heal(amount: float) -> void:
 	current_hp = minf(current_hp + amount, max_hp)
 	health_changed.emit(current_hp, max_hp)
 
+
 func _on_stage_clear() -> void:
+	if _is_transitioning:
+		return
+	_is_transitioning = true
+
 	stage_cleared.emit()
 	is_stage_cleared = true
-	is_dying = true
+	is_dying = true  # 操作を無効化
 	velocity = Vector2.ZERO
 
+	# Fade then go to Level Clear scene
+	if fade:
+		var t := create_tween()
+		t.tween_property(fade, "modulate:a", 1.0, 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		t.tween_callback(func():
+			get_tree().change_scene_to_file(LEVEL_CLEAR_SCENE)
+		)
+	else:
+		get_tree().change_scene_to_file(LEVEL_CLEAR_SCENE)
+
+
 func _input(event: InputEvent) -> void:
+	# ジャンプ入力を即座にバッファリング
 	if event.is_action_pressed("jump"):
 		jump_buffer = true
 
 	if not is_stage_cleared:
 		return
-
+	# スペース、N、Mキーでリスタート
 	if Input.is_action_just_pressed("jump") or Input.is_action_just_pressed("attack") or Input.is_action_just_pressed("gas_mask"):
 		get_tree().reload_current_scene()
 
+
 func handle_footsteps() -> void:
+	# Only play when:
+	# - on the floor
+	# - actually moving horizontally
+	# - not dying / attacking / charging
 	var can_step := (
 		is_on_floor()
 		and absf(velocity.x) > 5.0
 		and not is_dying
 		and not is_attacking
 		and not is_charging
+		and not _is_transitioning
 	)
 
 	if can_step:
@@ -416,5 +528,6 @@ func handle_footsteps() -> void:
 			footstep_timer.stop()
 
 func _on_footstep_timer_timeout() -> void:
+	# small pitch variation so it doesn't sound robotic
 	footstep_sfx.pitch_scale = randf_range(0.95, 1.05)
 	footstep_sfx.play()
