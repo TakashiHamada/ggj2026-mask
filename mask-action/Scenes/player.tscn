@@ -1,10 +1,11 @@
-[gd_scene load_steps=19 format=3 uid="uid://c36uba1keqcyl"]
+[gd_scene load_steps=20 format=3 uid="uid://c36uba1keqcyl"]
 
 [ext_resource type="Texture2D" uid="uid://b8i7vld7nkml2" path="res://Assets/platformer_metroidvania asset pack v1.01/herochar sprites(new)/herochar_idle_anim_strip_4.png" id="1_v0iea"]
 [ext_resource type="PackedScene" uid="uid://cgjlnf3evfod4" path="res://Scenes/dust_trail.tscn" id="2_fkybt"]
 [ext_resource type="Script" uid="uid://b7h4nqh0vyocr" path="res://Scripts/Player.gd" id="2_player"]
 [ext_resource type="AudioStream" uid="uid://dwn2s4il87p3i" path="res://Audio/DIRT - Run 4.wav" id="3_6t5aa"]
 [ext_resource type="Texture2D" uid="uid://dwq8yb16l3m60" path="res://Assets/platformer_metroidvania asset pack v1.01/herochar sprites(new)/herochar_run_anim_strip_6.png" id="3_vgqql"]
+[ext_resource type="AudioStream" path="res://Audio/maou_se_battle14.mp3" id="4_damage"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(12, 16)
@@ -153,7 +154,10 @@ shape = SubResource("RectangleShape2D_attack")
 
 [node name="FootstepSFX" type="AudioStreamPlayer2D" parent="."]
 stream = ExtResource("3_6t5aa")
-volume_db = 8.0
+volume_db = 6.0
+
+[node name="DamageSFX" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("4_damage")
 
 [node name="FootstepTimer" type="Timer" parent="."]
 wait_time = 0.3

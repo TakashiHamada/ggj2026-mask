@@ -5,5 +5,5 @@ func _ready() -> void:
 
 func _on_body_entered(body: Node) -> void:
 	if body.is_in_group("player") and body.has_method("heal"):
-		body.heal(PlayerConfig.HEART_HEAL_AMOUNT)
+		body.heal(body.max_hp)
 		queue_free()

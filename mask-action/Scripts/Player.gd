@@ -34,6 +34,7 @@ var total_coins: int = 0
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
 @onready var footstep_sfx: AudioStreamPlayer2D = $FootstepSFX
 @onready var footstep_timer: Timer = $FootstepTimer
+@onready var damage_sfx: AudioStreamPlayer2D = $DamageSFX
 
 # --- Run animation ---
 @export var run_anim_name: StringName = &"run"
@@ -204,6 +205,7 @@ func die(ignore_mask: bool = false) -> void:
 
 	current_hp -= 1
 	health_changed.emit(current_hp, max_hp)
+	damage_sfx.play()
 
 	# 溜め中・攻撃中だった場合はキャンセル
 	if is_charging or is_attacking:
