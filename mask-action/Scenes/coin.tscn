@@ -1,6 +1,6 @@
 [gd_scene load_steps=12 format=3 uid="uid://r40pqapdd5gc"]
 
-[ext_resource type="Texture2D" uid="uid://bmxgo3tshk7to" path="res://Scenes/platformer_metroidvania asset pack v1.01/miscellaneous sprites/coin_anim_strip_6.png" id="1_2qo34"]
+[ext_resource type="Texture2D" uid="uid://bmxgo3tshk7to" path="res://Assets/platformer_metroidvania asset pack v1.01/miscellaneous sprites/coin_anim_strip_6.png" id="1_2qo34"]
 [ext_resource type="Script" uid="uid://cpvas78dy2erl" path="res://Scenes/coin.gd" id="1_jgi06"]
 [ext_resource type="AudioStream" uid="uid://dmp5qn1w3bm41" path="res://Audio/2_Coins.ogg" id="3_g537i"]
 

@@ -35,6 +35,10 @@ var total_coins: int = 0
 @onready var footstep_sfx: AudioStreamPlayer2D = $FootstepSFX
 @onready var footstep_timer: Timer = $FootstepTimer
 
+# --- Run animation (ADDED) ---
+@export var run_anim_name: StringName = &"run"
+var _idle_anim_name: StringName
+
 var _move_input_x: float = 0.0
 var coyote_timer: float = 0.0  # 床から離れてからの経過時間
 var jump_buffer: bool = false  # ジャンプ入力バッファ
@@ -45,23 +49,31 @@ var charge_tween: Tween = null
 func _ready() -> void:
 	spawn_position = global_position
 	attack_area.body_entered.connect(_on_attack_hit)
+
+	# Capture whatever animation is set as "default/idle" in the editor
+	_idle_anim_name = sprite.animation
+
 	current_hp = max_hp
 	health_changed.emit(current_hp, max_hp)
+
 	# 攻撃範囲をパラメーターから設定
 	var shape := attack_shape.shape as RectangleShape2D
 	shape.size = Vector2(PlayerConfig.ATTACK_RANGE_X, PlayerConfig.ATTACK_RANGE_Y)
+
 	# ステージ内のコイン数をカウント
 	await get_tree().process_frame
-	# coinsグループに属するコインをカウント
 	total_coins = get_tree().get_nodes_in_group("coins").size()
+
 	# 岩の中のコインもカウント
 	for node in get_tree().get_nodes_in_group("destructible_rocks"):
 		if node.has_method("get") and node.get("coin_count") != null:
 			total_coins += node.coin_count
+
 	# ゾンビボスがドロップするコインもカウント
 	for node in get_tree().get_nodes_in_group("zombie_bosses"):
 		if node.has_method("get") and node.get("boss_coin_drop_count") != null:
 			total_coins += node.boss_coin_drop_count
+
 	coins_changed.emit(coins, total_coins)
 
 	# Footsteps
@@ -98,6 +110,35 @@ func _process(delta: float) -> void:
 		elif Input.is_action_just_released("attack") and is_charging:
 			_release_attack()
 
+
+# --- Animation update (ADDED) ---
+func _update_animation() -> void:
+	# Don't override attack/charge/dying (you control sprite.pause/play there)
+	if is_dying or is_attacking or is_charging:
+		return
+
+	# If we don't have an idle name, do nothing
+	if _idle_anim_name == StringName():
+		return
+
+	# Use input to decide "moving" (reliable) and avoid run sticking
+	var moving := absf(_move_input_x) > 0.01
+
+	# If airborne, don't force run (fallback to idle/default)
+	if not is_on_floor():
+		if sprite.sprite_frames.has_animation(_idle_anim_name) and sprite.animation != _idle_anim_name:
+			sprite.play(_idle_anim_name)
+		return
+
+	if moving:
+		if sprite.sprite_frames.has_animation(run_anim_name) and sprite.animation != run_anim_name:
+			sprite.play(run_anim_name)
+	else:
+		# Switch back to default/idle explicitly
+		if sprite.sprite_frames.has_animation(_idle_anim_name) and sprite.animation != _idle_anim_name:
+			sprite.play(_idle_anim_name)
+
+
 func obtain_mask() -> void:
 	has_mask = true
 
@@ -120,29 +161,28 @@ func die(ignore_mask: bool = false) -> void:
 		is_fully_charged = false
 		attack_area.monitoring = false
 		hammer.position = Vector2(0, -4)
-		hammer.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
+		hammer.scale = Vector2(facing_dir, 1)
 		hammer.visible = false
 		_stop_charge_effect()
 		sprite.play()
 
 	if current_hp <= 0:
-		# 死亡：ステージリセット
 		is_dying = true
 		velocity = Vector2.ZERO
 		_start_invincibility()
 		await get_tree().create_timer(PlayerConfig.DEATH_RESPAWN_TIME).timeout
 		get_tree().reload_current_scene()
 	else:
-		# ダメージを受けたが生存：硬直＋無敵時間
 		is_dying = true
-		velocity = Vector2.ZERO  # その場で停止
+		velocity = Vector2.ZERO
 		_start_invincibility()
 		await get_tree().create_timer(PlayerConfig.DAMAGE_STUN_TIME).timeout
-		is_dying = false  # 硬直解除（操作可能に）
+		is_dying = false
 		var remaining_invincibility := PlayerConfig.INVINCIBILITY_TIME - PlayerConfig.DAMAGE_STUN_TIME
 		if remaining_invincibility > 0:
 			await get_tree().create_timer(remaining_invincibility).timeout
 		_end_invincibility()
+
 
 func _physics_process(delta: float) -> void:
 	# コヨーテタイム（床から離れた後のジャンプ猶予）
@@ -158,21 +198,22 @@ func _physics_process(delta: float) -> void:
 	# 死亡中は操作不能（重力は適用）
 	if is_dying:
 		move_and_slide()
-		handle_footsteps() # will stop timer
+		handle_footsteps()
 		return
 
 	# 攻撃中・溜め中は移動不可（重力は適用）
 	if is_attacking or is_charging:
 		velocity.x = 0
 		move_and_slide()
+		handle_footsteps()
 		return
 
 	# ジャンプ（コヨーテタイム内なら空中でもジャンプ可能）
 	var can_jump := is_on_floor() or coyote_timer < PlayerConfig.COYOTE_TIME
 	if jump_buffer and can_jump:
 		velocity.y = PlayerConfig.JUMP_VELOCITY
-		coyote_timer = PlayerConfig.COYOTE_TIME  # ジャンプ後は猶予をリセット
-	jump_buffer = false  # バッファをクリア
+		coyote_timer = PlayerConfig.COYOTE_TIME
+	jump_buffer = false
 
 	# 小ジャンプ（上昇中にボタンを離すと減速）
 	if Input.is_action_just_released("jump") and velocity.y < 0:
@@ -190,21 +231,25 @@ func _physics_process(delta: float) -> void:
 		facing_dir = 1 if direction > 0 else -1
 	else:
 		velocity.x = move_toward(velocity.x, 0, move_speed)
+		if absf(velocity.x) < 1.0:
+			velocity.x = 0.0
+
+	# Update run/idle
+	_update_animation()
 
 	move_and_slide()
 	handle_footsteps()
 
 
 # 攻撃処理
-const ATTACK_START_Y: float = -12.0  # 上の開始位置
-const ATTACK_END_Y: float = 8.0      # 下の終了位置
+const ATTACK_START_Y: float = -12.0
+const ATTACK_END_Y: float = 8.0
 
 func _start_charge() -> void:
 	is_charging = true
 	charge_time = 0.0
 	is_fully_charged = false
 	sprite.pause()
-	# ハンマーを前方上部に構える
 	if weapon_type == WeaponType.HAMMER:
 		hammer.scale = Vector2(2 * facing_dir, 2)
 		hammer.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
@@ -228,7 +273,6 @@ func _release_attack() -> void:
 	is_fully_charged = false
 	_stop_charge_effect()
 
-	# 溜め時間に応じてダメージを計算
 	var charge_ratio := clampf(charge_time / PlayerConfig.ATTACK_CHARGE_TIME, 0.0, 1.0)
 	attack_damage = lerpf(PlayerConfig.ATTACK_BASE_DAMAGE, PlayerConfig.ATTACK_MAX_DAMAGE, charge_ratio)
 
@@ -242,12 +286,10 @@ func _release_hammer_attack() -> void:
 	attack_area.position.x = PlayerConfig.ATTACK_OFFSET_X * facing_dir
 	attack_area.monitoring = true
 
-	# ハンマーを真下に振り下ろすアニメーション
 	var tween := create_tween()
 	tween.tween_property(hammer, "position:y", ATTACK_END_Y, 0.1)
 	tween.tween_callback(_end_attack)
 
-	# 攻撃判定（アニメーション中に重なっているボディをチェック）
 	await get_tree().physics_frame
 	for body in attack_area.get_overlapping_bodies():
 		_on_attack_hit(body)
@@ -256,7 +298,6 @@ func _release_boomerang_attack() -> void:
 	is_boomerang_thrown = true
 	sprite.play()
 
-	# ブーメランを生成
 	var boomerang_scene := preload("res://Scenes/boomerang.tscn")
 	var boomerang := boomerang_scene.instantiate()
 	get_parent().add_child(boomerang)
@@ -269,9 +310,9 @@ func on_boomerang_returned() -> void:
 func _end_attack() -> void:
 	is_attacking = false
 	attack_area.monitoring = false
-	hammer.position = Vector2(0, -4)  # 元の位置に戻す
-	hammer.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
-	sprite.play()  # アニメーション再開
+	hammer.position = Vector2(0, -4)
+	hammer.scale = Vector2(facing_dir, 1)
+	sprite.play()
 
 func _on_attack_hit(body: Node) -> void:
 	if body == self:
@@ -280,7 +321,6 @@ func _on_attack_hit(body: Node) -> void:
 		body.take_damage(attack_damage)
 	if body.is_in_group("enemy"):
 		body.take_hit(1, global_position)
-
 	elif body.has_method("die"):
 		body.die()
 
@@ -297,14 +337,13 @@ func take_gas_damage(delta: float) -> void:
 		_die_from_gas()
 
 func _die_from_gas() -> void:
-	# 溜め中・攻撃中だった場合はキャンセル
 	if is_charging or is_attacking:
 		is_charging = false
 		is_attacking = false
 		is_fully_charged = false
 		attack_area.monitoring = false
 		hammer.position = Vector2(0, -4)
-		hammer.scale = Vector2(facing_dir, 1)  # 元のサイズに戻す
+		hammer.scale = Vector2(facing_dir, 1)
 		hammer.visible = false
 		_stop_charge_effect()
 		sprite.play()
@@ -315,32 +354,24 @@ func _die_from_gas() -> void:
 	await get_tree().create_timer(PlayerConfig.DEATH_RESPAWN_TIME).timeout
 	get_tree().reload_current_scene()
 
-# 無敵状態の開始（点滅＋敵すり抜け）
 func _start_invincibility() -> void:
-	# 敵との当たり判定を無効化（レイヤー8に移動）
 	set_collision_layer_value(1, false)
 	set_collision_layer_value(8, true)
 
-	# 点滅開始
 	if blink_tween:
 		blink_tween.kill()
 	blink_tween = create_tween().set_loops()
 	blink_tween.tween_property(sprite, "modulate:a", 0.3, 0.08)
 	blink_tween.tween_property(sprite, "modulate:a", 1.0, 0.08)
 
-# 無敵状態の終了
 func _end_invincibility() -> void:
-	# 当たり判定を元に戻す
 	set_collision_layer_value(8, false)
 	set_collision_layer_value(1, true)
 
-	# 点滅停止
 	if blink_tween:
 		blink_tween.kill()
 		blink_tween = null
 	sprite.modulate.a = 1.0
-
-	
 
 func add_coin(amount: int) -> void:
 	coins += amount
@@ -355,27 +386,20 @@ func heal(amount: float) -> void:
 func _on_stage_clear() -> void:
 	stage_cleared.emit()
 	is_stage_cleared = true
-	is_dying = true  # 操作を無効化
+	is_dying = true
 	velocity = Vector2.ZERO
 
 func _input(event: InputEvent) -> void:
-	# ジャンプ入力を即座にバッファリング
 	if event.is_action_pressed("jump"):
 		jump_buffer = true
 
 	if not is_stage_cleared:
 		return
-	# スペース、N、Mキーでリスタート
+
 	if Input.is_action_just_pressed("jump") or Input.is_action_just_pressed("attack") or Input.is_action_just_pressed("gas_mask"):
 		get_tree().reload_current_scene()
 
-
-
 func handle_footsteps() -> void:
-	# Only play when:
-	# - on the floor
-	# - actually moving horizontally
-	# - not dying / attacking / charging
 	var can_step := (
 		is_on_floor()
 		and absf(velocity.x) > 5.0
@@ -392,6 +416,5 @@ func handle_footsteps() -> void:
 			footstep_timer.stop()
 
 func _on_footstep_timer_timeout() -> void:
-	# small pitch variation so it doesn't sound robotic
 	footstep_sfx.pitch_scale = randf_range(0.95, 1.05)
 	footstep_sfx.play()

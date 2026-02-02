@@ -1,14 +1,14 @@
-[gd_scene load_steps=3 format=3 uid="uid://boomerang_scene"]
+[gd_scene load_steps=3 format=3 uid="uid://1q3etq426d0n"]
 
-[ext_resource type="Script" path="res://Scripts/Boomerang.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://kunlctf7jju2" path="res://Scripts/Boomerang.gd" id="1_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_boomerang"]
 size = Vector2(16, 12)
 
 [node name="Boomerang" type="Area2D"]
+scale = Vector2(0.44000012, 0.44000012)
 collision_layer = 0
 collision_mask = 20
-monitoring = true
 monitorable = false
 script = ExtResource("1_script")
 
